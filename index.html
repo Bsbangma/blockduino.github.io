@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="blockduino-channel" content="release">
 <title>BlockDuino — visual Arduino programming</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -730,6 +731,61 @@ text.bold { font-weight: 600; }
   max-width: 340px;
 }
 .update-chip.show { transform: translateY(0); opacity: 1; }
+
+/* Channel warning chip (alpha/beta) */
+.channel-chip {
+  position: fixed;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  z-index: 89;
+  font-size: 12px;
+  font-weight: 600;
+  display: none;
+  gap: 12px;
+  align-items: center;
+  max-width: 90vw;
+  border: 1.5px solid transparent;
+}
+.channel-chip.show { display: flex; }
+.channel-chip.alpha {
+  background: linear-gradient(135deg, #d84343 0%, #a3286a 100%);
+  color: #fff;
+  border-color: #ff9a9a;
+}
+.channel-chip.beta {
+  background: linear-gradient(135deg, #d4a24d 0%, #b26f2a 100%);
+  color: #1a1010;
+  border-color: #ffdd88;
+}
+.channel-chip a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 700;
+}
+.channel-chip a:hover { opacity: 0.85; }
+.channel-chip .channel-label {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.channel-chip .channel-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  opacity: 0.6;
+}
+.channel-chip .channel-close:hover { opacity: 1; }
 .update-chip:hover { filter: brightness(1.05); }
 .update-chip .reload-btn {
   background: rgba(15, 20, 25, 0.2);
@@ -830,7 +886,7 @@ text.bold { font-weight: 600; }
 <body>
 
 <header>
-  <h1>BlockDuino <span>v2.2 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v2.3 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1025,6 +1081,13 @@ text.bold { font-weight: 600; }
       <button class="primary" id="settings-close">Done</button>
     </div>
   </div>
+</div>
+
+<!-- Channel warning banner (only shown on alpha/beta builds) -->
+<div class="channel-chip" id="channel-chip">
+  <span class="channel-label" id="channel-label">BETA</span>
+  <span>You're using a preview version. <a id="channel-downgrade" href="#" target="_blank" rel="noopener">Switch to stable</a></span>
+  <button class="channel-close" id="channel-close" title="Dismiss">✕</button>
 </div>
 
 <!-- Update-available notification -->
@@ -3573,6 +3636,46 @@ function setupResizer(el, side) {
 }
 setupResizer(document.getElementById('resizer-left'), 'left');
 setupResizer(document.getElementById('resizer-right'), 'right');
+
+// ============================================================
+// Release channel banner (alpha/beta warning)
+// ============================================================
+// Reads <meta name="blockduino-channel" content="alpha|beta|release"> from the
+// document head. If alpha or beta, shows a warning banner with a link to the
+// stable release. Users can dismiss it per-session.
+const STABLE_SITE_URL = 'https://blockduinoappsimple.github.io/';
+const CHANNEL_DISMISS_KEY = 'blockduino_channel_dismissed';
+
+function getChannel() {
+  const meta = document.querySelector('meta[name="blockduino-channel"]');
+  const val = meta ? (meta.getAttribute('content') || '').toLowerCase() : 'release';
+  if (val === 'alpha' || val === 'beta') return val;
+  return 'release';
+}
+
+function initChannelBanner() {
+  const channel = getChannel();
+  if (channel === 'release') return;
+  // Respect per-channel dismissal so users don't get nagged every reload
+  let dismissed = null;
+  try { dismissed = sessionStorage.getItem(CHANNEL_DISMISS_KEY); } catch(e) {}
+  if (dismissed === channel) return;
+
+  const chip = document.getElementById('channel-chip');
+  const label = document.getElementById('channel-label');
+  const link = document.getElementById('channel-downgrade');
+  label.textContent = channel.toUpperCase();
+  chip.classList.remove('alpha', 'beta');
+  chip.classList.add(channel);
+  link.href = STABLE_SITE_URL;
+  chip.classList.add('show');
+
+  document.getElementById('channel-close').addEventListener('click', () => {
+    chip.classList.remove('show');
+    try { sessionStorage.setItem(CHANNEL_DISMISS_KEY, channel); } catch(e) {}
+  });
+}
+setTimeout(initChannelBanner, 500);
 
 // ============================================================
 // Update checker
