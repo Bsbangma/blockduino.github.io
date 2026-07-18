@@ -149,6 +149,50 @@ header button:hover { background: #252e3a; border-color: var(--accent); color: v
   font-style: italic;
 }
 
+/* Right-click context menu */
+.context-menu {
+  position: fixed;
+  display: none;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: 6px;
+  z-index: 500;
+  min-width: 180px;
+  user-select: none;
+}
+.context-menu.show { display: block; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.ctx-item:hover { background: var(--panel-2); color: var(--accent); }
+.ctx-item.danger:hover { background: rgba(224, 108, 117, 0.15); color: #e06c75; }
+.ctx-item .ctx-shortcut {
+  color: var(--ink-dim);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.ctx-item:hover .ctx-shortcut { color: var(--ink); }
+.ctx-divider {
+  height: 1px;
+  background: var(--line-strong);
+  margin: 4px 0;
+}
+
 #palette.delete-zone {
   background: linear-gradient(to right, rgba(224, 108, 117, 0.18), var(--panel) 60%);
   box-shadow: inset 3px 0 0 #e06c75;
@@ -1471,7 +1515,7 @@ body.hardcore-active header h1::after {
 <body>
 
 <header>
-  <h1>BlockDuino <span>v5.2 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v5.3 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1627,6 +1671,15 @@ body.hardcore-active header h1::after {
   <div class="hc-corner bottom-left">USER: GRAYSON // BSBANGMA</div>
   <div class="hc-corner bottom-right">GRAND RAPIDS, MI</div>
   <div class="hc-flash" id="hc-flash"></div>
+</div>
+
+<!-- Right-click context menu for blocks -->
+<div id="block-context-menu" class="context-menu">
+  <button class="ctx-item" data-action="copy">📋 Copy <span class="ctx-shortcut">Ctrl+C</span></button>
+  <button class="ctx-item" data-action="cut">✂ Cut <span class="ctx-shortcut">Ctrl+X</span></button>
+  <button class="ctx-item" data-action="duplicate">⎘ Duplicate <span class="ctx-shortcut">Ctrl+D</span></button>
+  <div class="ctx-divider"></div>
+  <button class="ctx-item danger" data-action="delete">🗑 Delete <span class="ctx-shortcut">Del</span></button>
 </div>
 
 <!-- Heavenly light beams (used after Hardcore cutscene when Libraries opens) -->
@@ -3726,6 +3779,76 @@ svgEl.addEventListener('pointerdown', e => {
   regenerate();
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('pointerup', onPointerUp);
+});
+
+// ============================================================
+// Right-click context menu on blocks
+// ============================================================
+const contextMenu = document.getElementById('block-context-menu');
+
+svgEl.addEventListener('contextmenu', e => {
+  // Shift+right-click = selection box (handled in pointerdown), don't show menu
+  if (e.shiftKey) { e.preventDefault(); return; }
+
+  // Walk up to find the nearest block
+  let target = e.target;
+  let blockId = null;
+  while (target && target !== svgEl) {
+    if (target.dataset && target.dataset.blockId) { blockId = target.dataset.blockId; break; }
+    target = target.parentNode;
+  }
+  if (!blockId) return; // No block clicked — let the browser show its default menu
+
+  e.preventDefault();
+
+  // If the block isn't already selected, select just it
+  if (!state.selection.has(blockId)) {
+    state.selection = new Set([blockId]);
+    renderWorkspace();
+  }
+
+  // Position the menu at the cursor, adjusting if it would go off screen
+  const menuW = 200; // approximate
+  const menuH = 180; // approximate
+  let x = e.clientX;
+  let y = e.clientY;
+  if (x + menuW > window.innerWidth) x = window.innerWidth - menuW - 4;
+  if (y + menuH > window.innerHeight) y = window.innerHeight - menuH - 4;
+  contextMenu.style.left = x + 'px';
+  contextMenu.style.top = y + 'px';
+  contextMenu.classList.add('show');
+});
+
+// Menu item dispatch
+contextMenu.addEventListener('click', e => {
+  const item = e.target.closest('.ctx-item');
+  if (!item) return;
+  const action = item.dataset.action;
+  hideContextMenu();
+  switch (action) {
+    case 'copy':      doCopy(); break;
+    case 'cut':       doCut(); break;
+    case 'duplicate': doDuplicate(); break;
+    case 'delete':    deleteSelection(); break;
+  }
+});
+
+function hideContextMenu() {
+  contextMenu.classList.remove('show');
+}
+
+// Hide on any click outside the menu
+window.addEventListener('mousedown', e => {
+  if (!contextMenu.contains(e.target)) hideContextMenu();
+});
+// Hide on scroll or resize (menu position would be stale)
+window.addEventListener('scroll', hideContextMenu, true);
+window.addEventListener('resize', hideContextMenu);
+// Hide on Escape too
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && contextMenu.classList.contains('show')) {
+    hideContextMenu();
+  }
 });
 
 function onPointerMove(e) {
