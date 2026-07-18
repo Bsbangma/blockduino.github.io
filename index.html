@@ -1427,7 +1427,7 @@ body.hardcore-active header h1::after {
 <body>
 
 <header>
-  <h1>BlockDuino <span>v5.0 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v5.1 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1767,6 +1767,8 @@ function rebuildCategories() {
   for (const libId of Object.keys(LIBRARIES)) {
     if (state.activeLibraries && state.activeLibraries.has(libId)) {
       const lib = LIBRARIES[libId];
+      // Skip premium libraries when Hardcore is off
+      if (lib.premium && !state.settings.hardcoreCoder) continue;
       CATEGORIES.push({ id: lib.id, name: lib.name, colorHex: lib.color });
     }
   }
@@ -2635,10 +2637,11 @@ function applyActiveLibraries() {
       delete BLOCK_DEFS[key];
     }
   }
-  // Re-add active library blocks
+  // Re-add active library blocks — but skip premium libraries if Hardcore is off
   for (const libId of state.activeLibraries) {
     const lib = LIBRARIES[libId];
     if (!lib) continue;
+    if (lib.premium && !state.settings.hardcoreCoder) continue;  // gated
     for (const [name, def] of Object.entries(lib.blocks)) {
       BLOCK_DEFS[name] = def;
     }
@@ -4090,11 +4093,16 @@ function openLibraryModal() {
   list.innerHTML = '';
 
   // Split libraries into premium (Group 2) and regular
+  // When Hardcore is off, premium libraries are completely hidden
   const premiumEntries = [];
   const regularEntries = [];
   for (const [libId, lib] of Object.entries(LIBRARIES)) {
-    if (lib.premium) premiumEntries.push([libId, lib]);
-    else regularEntries.push([libId, lib]);
+    if (lib.premium) {
+      if (state.settings.hardcoreCoder) premiumEntries.push([libId, lib]);
+      // else: skip entirely
+    } else {
+      regularEntries.push([libId, lib]);
+    }
   }
 
   // Build a single row (used for both sections)
@@ -4219,6 +4227,65 @@ function openSettingsModal() {
     `;
     const cb = row.querySelector('input');
     cb.addEventListener('change', async () => {
+      // Special case: turning OFF Hardcore Coder locks the premium libraries.
+      // Warn about any premium blocks in the workspace and delete them.
+      if (s.key === 'hardcoreCoder' && !cb.checked && state.settings.hardcoreCoder) {
+        const premiumLibIds = Object.entries(LIBRARIES)
+          .filter(([_, lib]) => lib.premium)
+          .map(([id, _]) => id);
+        // Count all blocks belonging to any premium library
+        const premiumBlockCount = countBlocksFromLibs(premiumLibIds);
+        const activePremiumLibs = premiumLibIds.filter(id => state.activeLibraries.has(id));
+        if (premiumBlockCount > 0 || activePremiumLibs.length > 0) {
+          const parts = [];
+          if (premiumBlockCount > 0) {
+            parts.push(`${premiumBlockCount} block${premiumBlockCount === 1 ? '' : 's'} from Advanced Libraries in your workspace`);
+          }
+          if (activePremiumLibs.length > 0) {
+            parts.push(`${activePremiumLibs.length} active Advanced ${activePremiumLibs.length === 1 ? 'Library' : 'Libraries'}`);
+          }
+          const ok = await themedConfirm(
+            `Turning off Hardcore Coder will lock the Advanced Libraries.\n\n` +
+            `This will:\n` +
+            `• Remove all Advanced Library blocks from your workspace (${parts.join(', ')})\n` +
+            `• Deactivate any active Advanced Libraries\n\n` +
+            `This can be undone with Ctrl+Z. Continue?`,
+            { okLabel: 'Turn off Hardcore', cancelLabel: 'Keep Hardcore on' }
+          );
+          if (!ok) {
+            cb.checked = true;
+            return;
+          }
+          pushHistorySnapshot();
+          // Delete every block whose def belongs to a premium library
+          const premiumBlockDefs = new Set();
+          for (const libId of premiumLibIds) {
+            const lib = LIBRARIES[libId];
+            if (!lib) continue;
+            for (const defName of Object.keys(lib.blocks)) premiumBlockDefs.add(defName);
+          }
+          const toDelete = [];
+          for (const [id, b] of state.blocks) {
+            if (premiumBlockDefs.has(b.def)) toDelete.push(id);
+          }
+          for (const id of toDelete) {
+            if (state.blocks.has(id)) removeBlock(id);
+          }
+          // Deactivate any premium libraries
+          for (const libId of activePremiumLibs) state.activeLibraries.delete(libId);
+          // Fall through to the standard setting change (skip the generic check below
+          // by returning after finishing here)
+          state.settings[s.key] = false;
+          document.body.classList.remove('hardcore-active');
+          applyActiveLibraries();
+          renderPalette();
+          renderWorkspace();
+          regenerate();
+          saveState();
+          return;
+        }
+      }
+
       // If turning OFF a setting whose blocks are in use, warn.
       if (!cb.checked && state.settings[s.key]) {
         const blocksInUse = countBlocksUsingSetting(s.key);
@@ -5170,6 +5237,21 @@ function countBlocksUsingLib(libId) {
   const lib = LIBRARIES[libId];
   if (!lib) return 0;
   const defNames = new Set(Object.keys(lib.blocks));
+  let n = 0;
+  for (const b of state.blocks.values()) {
+    if (defNames.has(b.def)) n++;
+  }
+  return n;
+}
+
+// Count blocks belonging to any of the given library IDs.
+function countBlocksFromLibs(libIds) {
+  const defNames = new Set();
+  for (const libId of libIds) {
+    const lib = LIBRARIES[libId];
+    if (!lib) continue;
+    for (const defName of Object.keys(lib.blocks)) defNames.add(defName);
+  }
   let n = 0;
   for (const b of state.blocks.values()) {
     if (defNames.has(b.def)) n++;
