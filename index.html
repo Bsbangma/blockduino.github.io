@@ -1229,6 +1229,7 @@ body.hardcore-active header h1 {
 body.hardcore-active header h1::after {
   content: ' 💀';
   display: inline-block;
+  padding-left: 20px;
   filter: drop-shadow(0 0 6px #ff2b2b) drop-shadow(0 0 12px rgba(255, 43, 43, 0.6));
   animation:
     hc-skull-startup 0.1s ease-out 1 forwards,
@@ -1599,7 +1600,7 @@ body.hardcore-active header h1::after {
 <body>
 
 <header>
-  <h1>BlockDuino <span>v5.5 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v6.3 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -2034,6 +2035,18 @@ const BLOCK_DEFS = {
     parts: [{t:'read analog A'}, {f:{name:'pin', type:'number', default:0}}],
     code: (b) => `analogRead(A${b.fields.pin})`,
   },
+  pinEdgeDetect: {
+    cat: 'pin', kind: 'reporter', output: 'boolean',
+    parts: [
+      {t:'pin'}, {f:{name:'pin', type:'number', default:2}},
+      {f:{name:'edge', type:'select', default:'changed', options:['changed','rising','falling']}},
+    ],
+    code: (b, gen) => {
+      gen.needsEdgeDetect = true;
+      const mode = { changed: 0, rising: 1, falling: 2 }[b.fields.edge] || 0;
+      return `pinEdge(${b.fields.pin}, ${mode})`;
+    },
+  },
 
   // ---- CONTROL ----
   delay: {
@@ -2058,6 +2071,31 @@ const BLOCK_DEFS = {
       {t:'times using'}, {f:{name:'var', type:'text', default:'i'}},
     ],
     code: (b, gen) => `for (int ${b.fields.var} = 0; ${b.fields.var} < ${gen.input(b, 'count')}; ${b.fields.var}++) {\n${gen.children(b, gen.indent + '  ')}${gen.indent}}`,
+  },
+  forRange: {
+    cat: 'ctrl', kind: 'statement', isContainer: true,
+    parts: [
+      {t:'count'},   {f:{name:'var', type:'text', default:'i'}},
+      {t:'from'},    {i:{name:'lo', valueType:'number', default:'0'}},
+      {t:'to'},      {i:{name:'hi', valueType:'number', default:'10'}},
+      {t:'step'},    {i:{name:'step', valueType:'number', default:'1'}},
+    ],
+    code: (b, gen) => `for (int ${b.fields.var} = ${gen.input(b,'lo')}; ${b.fields.var} <= ${gen.input(b,'hi')}; ${b.fields.var} += ${gen.input(b,'step')}) {\n${gen.children(b, gen.indent + '  ')}${gen.indent}}`,
+  },
+  doWhile: {
+    cat: 'ctrl', kind: 'statement', isContainer: true,
+    parts: [{t:'do... while'}, {i:{name:'cond', valueType:'boolean', default:'true'}}],
+    code: (b, gen) => `do {\n${gen.children(b, gen.indent + '  ')}${gen.indent}} while (${gen.input(b,'cond')});`,
+  },
+  breakLoop: {
+    cat: 'ctrl', kind: 'statement',
+    parts: [{t:'break out of loop'}],
+    code: () => `break;`,
+  },
+  continueLoop: {
+    cat: 'ctrl', kind: 'statement',
+    parts: [{t:'skip to next iteration'}],
+    code: () => `continue;`,
   },
 
   // ---- MATH (reporters) ----
@@ -2086,6 +2124,85 @@ const BLOCK_DEFS = {
       {t:'to'},          {i:{name:'max', valueType:'number', default:'100'}},
     ],
     code: (b, gen) => `random(${gen.input(b,'min')}, (${gen.input(b,'max')}) + 1)`,
+  },
+  mathAbs: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [{t:'abs'}, {i:{name:'n', valueType:'number', default:'-5'}}],
+    code: (b, gen) => `abs(${gen.input(b,'n')})`,
+  },
+  mathMin: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'min of'}, {i:{name:'a', valueType:'number', default:'0'}},
+      {t:'and'},    {i:{name:'b', valueType:'number', default:'0'}},
+    ],
+    code: (b, gen) => `min(${gen.input(b,'a')}, ${gen.input(b,'b')})`,
+  },
+  mathMax: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'max of'}, {i:{name:'a', valueType:'number', default:'0'}},
+      {t:'and'},    {i:{name:'b', valueType:'number', default:'0'}},
+    ],
+    code: (b, gen) => `max(${gen.input(b,'a')}, ${gen.input(b,'b')})`,
+  },
+  mathSqrt: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [{t:'√'}, {i:{name:'n', valueType:'number', default:'9'}}],
+    code: (b, gen) => `sqrt(${gen.input(b,'n')})`,
+  },
+  mathPower: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {i:{name:'base', valueType:'number', default:'2'}},
+      {t:'to the power of'},
+      {i:{name:'exp',  valueType:'number', default:'8'}},
+    ],
+    code: (b, gen) => `pow(${gen.input(b,'base')}, ${gen.input(b,'exp')})`,
+  },
+  mathRound: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {f:{name:'mode', type:'select', default:'round', options:['round','floor','ceiling']}},
+      {i:{name:'n', valueType:'number', default:'0.5'}},
+    ],
+    code: (b, gen) => {
+      const fn = { round: 'round', floor: 'floor', ceiling: 'ceil' }[b.fields.mode] || 'round';
+      return `${fn}(${gen.input(b,'n')})`;
+    },
+  },
+  mathMap: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'map'},   {i:{name:'v', valueType:'number', default:'0'}},
+      {t:'from'},  {i:{name:'fromLo', valueType:'number', default:'0'}},
+      {t:'..'},    {i:{name:'fromHi', valueType:'number', default:'1023'}},
+      {t:'to'},    {i:{name:'toLo',   valueType:'number', default:'0'}},
+      {t:'..'},    {i:{name:'toHi',   valueType:'number', default:'255'}},
+    ],
+    code: (b, gen) => `map(${gen.input(b,'v')}, ${gen.input(b,'fromLo')}, ${gen.input(b,'fromHi')}, ${gen.input(b,'toLo')}, ${gen.input(b,'toHi')})`,
+  },
+  mathConstrain: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'constrain'}, {i:{name:'v', valueType:'number', default:'0'}},
+      {t:'between'},   {i:{name:'lo', valueType:'number', default:'0'}},
+      {t:'and'},       {i:{name:'hi', valueType:'number', default:'255'}},
+    ],
+    code: (b, gen) => `constrain(${gen.input(b,'v')}, ${gen.input(b,'lo')}, ${gen.input(b,'hi')})`,
+  },
+  mathTrig: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [
+      {f:{name:'fn', type:'select', default:'sin', options:['sin','cos','tan']}},
+      {t:'of'}, {i:{name:'x', valueType:'number', default:'0'}}, {t:'rad'},
+    ],
+    code: (b, gen) => `${b.fields.fn}(${gen.input(b,'x')})`,
+  },
+  mathPi: {
+    cat: 'math', kind: 'reporter', output: 'number',
+    parts: [{t:'π'}],
+    code: () => `PI`,
   },
 
   // ---- LOGIC (reporters) ----
@@ -2135,6 +2252,15 @@ const BLOCK_DEFS = {
     parts: [{t:'false'}],
     code: () => 'false',
   },
+  logicTernary: {
+    cat: 'logic', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'if'},   {i:{name:'cond', valueType:'boolean', default:'true'}},
+      {t:'then'}, {i:{name:'a',    valueType:'number',  default:'1'}},
+      {t:'else'}, {i:{name:'b',    valueType:'number',  default:'0'}},
+    ],
+    code: (b, gen) => `((${gen.input(b,'cond')}) ? (${gen.input(b,'a')}) : (${gen.input(b,'b')}))`,
+  },
 
   // ---- VARIABLES ----
   varGet: {
@@ -2158,6 +2284,50 @@ const BLOCK_DEFS = {
     ],
     code: (b, gen) => { gen.declareInt(b.fields.var); return `${b.fields.var} += ${gen.input(b, 'amount')};`; },
   },
+  listCreate: {
+    cat: 'var', kind: 'statement',
+    parts: [
+      {t:'create list'}, {f:{name:'name', type:'text', default:'myList'}},
+      {t:'with size'},   {f:{name:'size', type:'number', default:10}},
+    ],
+    code: (b, gen) => {
+      gen.declareArray(b.fields.name, parseInt(b.fields.size, 10) || 1);
+      return `// list ${b.fields.name} declared (size ${b.fields.size})`;
+    },
+  },
+  listSet: {
+    cat: 'var', kind: 'statement',
+    parts: [
+      {t:'set'},  {f:{name:'name', type:'text', default:'myList'}},
+      {t:'at'},   {i:{name:'idx',  valueType:'number', default:'0'}},
+      {t:'to'},   {i:{name:'v',    valueType:'number', default:'0'}},
+    ],
+    code: (b, gen) => {
+      gen.declareArray(b.fields.name, 1);
+      return `${b.fields.name}[${gen.input(b,'idx')}] = ${gen.input(b,'v')};`;
+    },
+  },
+  listGet: {
+    cat: 'var', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'item'}, {i:{name:'idx',  valueType:'number', default:'0'}},
+      {t:'of'},   {f:{name:'name', type:'text', default:'myList'}},
+    ],
+    code: (b, gen) => {
+      gen.declareArray(b.fields.name, 1);
+      return `${b.fields.name}[${gen.input(b,'idx')}]`;
+    },
+  },
+  listLength: {
+    cat: 'var', kind: 'reporter', output: 'number',
+    parts: [
+      {t:'length of'}, {f:{name:'name', type:'text', default:'myList'}},
+    ],
+    code: (b, gen) => {
+      gen.declareArray(b.fields.name, 1);
+      return `(int)(sizeof(${b.fields.name}) / sizeof(${b.fields.name}[0]))`;
+    },
+  },
 
   // ---- SERIAL ----
   serialBegin: {
@@ -2175,6 +2345,34 @@ const BLOCK_DEFS = {
     parts: [{t:'serial println'}, {i:{name:'value', valueType:'any', default:'"hello"'}}],
     code: (b, gen) => `Serial.println(${gen.input(b, 'value')});`,
   },
+  serialAvailable: {
+    cat: 'serial', kind: 'reporter', output: 'number',
+    parts: [{t:'serial bytes available'}],
+    code: () => `Serial.available()`,
+  },
+  serialReadChar: {
+    cat: 'serial', kind: 'reporter', output: 'number',
+    parts: [{t:'serial read byte'}],
+    code: () => `Serial.read()`,
+  },
+  serialReadString: {
+    cat: 'serial', kind: 'reporter', output: 'any',
+    parts: [{t:'serial read line'}],
+    code: () => `Serial.readStringUntil('\\n')`,
+  },
+  serialReadStringUntil: {
+    cat: 'serial', kind: 'reporter', output: 'any',
+    parts: [{t:'serial read until'}, {f:{name:'delim', type:'text', default:','}}],
+    code: (b) => {
+      const d = String(b.fields.delim || '\n').replace(/'/g, "\\'");
+      return `Serial.readStringUntil('${d}')`;
+    },
+  },
+  serialFlush: {
+    cat: 'serial', kind: 'statement',
+    parts: [{t:'serial flush (wait for send to finish)'}],
+    code: () => `Serial.flush();`,
+  },
 };
 
 // ----------------------------------------------------------
@@ -2187,6 +2385,22 @@ const BLOCK_DEFS = {
 //   blocks: keyed by block name -> def (same shape as BLOCK_DEFS entries)
 // Libraries are inactive by default; activating one adds its blocks to the palette
 // and causes its includes to be emitted in generated code.
+
+// Convert a note name like 'A4' or 'C#5' to its frequency in Hz.
+// Uses equal-tempered tuning, A4 = 440 Hz.
+function noteToHz(note) {
+  const semis = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  const m = String(note).match(/^([A-G])(#|b)?(\d)$/);
+  if (!m) return 440;
+  let s = semis[m[1]];
+  if (m[2] === '#') s += 1;
+  if (m[2] === 'b') s -= 1;
+  const oct = parseInt(m[3], 10);
+  // MIDI number: C0 = 12, so note = 12 * (oct + 1) + s
+  const midi = 12 * (oct + 1) + s;
+  const hz = 440 * Math.pow(2, (midi - 69) / 12);
+  return Math.round(hz);
+}
 
 const LIBRARIES = {
   servo: {
@@ -2224,6 +2438,11 @@ const LIBRARIES = {
         parts: [{t:'detach servo'}, {f:{name:'name', type:'text', default:'myServo'}}],
         code: (b, gen) => { gen.declareServo(b.fields.name); return `${b.fields.name}.detach();`; },
       },
+      servoRead: {
+        cat: 'servo', kind: 'reporter', output: 'number',
+        parts: [{t:'angle of servo'}, {f:{name:'name', type:'text', default:'myServo'}}],
+        code: (b, gen) => { gen.declareServo(b.fields.name); return `${b.fields.name}.read()`; },
+      },
     },
   },
 
@@ -2256,6 +2475,31 @@ const LIBRARIES = {
         cat: 'tone', kind: 'statement',
         parts: [{t:'stop tone on pin'}, {f:{name:'pin', type:'number', default:8}}],
         code: (b) => `noTone(${b.fields.pin});`,
+      },
+      tonePlayNote: {
+        cat: 'tone', kind: 'statement',
+        parts: [
+          {t:'play note'}, {f:{name:'note', type:'select', default:'A4', options:[
+            'C3','D3','E3','F3','G3','A3','B3',
+            'C4','D4','E4','F4','G4','A4','B4',
+            'C5','D5','E5','F5','G5','A5','B5',
+          ]}},
+          {t:'on pin'}, {f:{name:'pin', type:'number', default:8}},
+        ],
+        code: (b) => `tone(${b.fields.pin}, ${noteToHz(b.fields.note)});`,
+      },
+      tonePlayNoteDuration: {
+        cat: 'tone', kind: 'statement',
+        parts: [
+          {t:'play note'}, {f:{name:'note', type:'select', default:'A4', options:[
+            'C3','D3','E3','F3','G3','A3','B3',
+            'C4','D4','E4','F4','G4','A4','B4',
+            'C5','D5','E5','F5','G5','A5','B5',
+          ]}},
+          {t:'on pin'}, {f:{name:'pin', type:'number', default:8}},
+          {t:'for'},    {i:{name:'dur', valueType:'number', default:'500'}}, {t:'ms'},
+        ],
+        code: (b, gen) => `tone(${b.fields.pin}, ${noteToHz(b.fields.note)}, ${gen.input(b,'dur')});`,
       },
     },
   },
@@ -2338,6 +2582,42 @@ const LIBRARIES = {
         parts: [{t:'LCD print'}, {i:{name:'value', valueType:'any', default:'"Hello"'}}],
         code: (b, gen) => `lcd.print(${gen.input(b,'value')});`,
       },
+      lcdCursor: {
+        cat: 'lcd', kind: 'statement',
+        parts: [
+          {t:'LCD cursor'}, {f:{name:'mode', type:'select', default:'blink', options:['blink','solid','off']}},
+        ],
+        code: (b) => {
+          const m = b.fields.mode;
+          if (m === 'blink') return `lcd.blink();`;
+          if (m === 'solid') return `lcd.cursor(); lcd.noBlink();`;
+          return `lcd.noBlink(); lcd.noCursor();`;
+        },
+      },
+      lcdScroll: {
+        cat: 'lcd', kind: 'statement',
+        parts: [
+          {t:'LCD scroll'},
+          {f:{name:'dir', type:'select', default:'left', options:['left','right']}},
+        ],
+        code: (b) => b.fields.dir === 'left' ? `lcd.scrollDisplayLeft();` : `lcd.scrollDisplayRight();`,
+      },
+      lcdAutoscroll: {
+        cat: 'lcd', kind: 'statement',
+        parts: [
+          {t:'LCD autoscroll'},
+          {f:{name:'onoff', type:'select', default:'on', options:['on','off']}},
+        ],
+        code: (b) => b.fields.onoff === 'on' ? `lcd.autoscroll();` : `lcd.noAutoscroll();`,
+      },
+      lcdDisplay: {
+        cat: 'lcd', kind: 'statement',
+        parts: [
+          {t:'LCD display'},
+          {f:{name:'onoff', type:'select', default:'on', options:['on','off']}},
+        ],
+        code: (b) => b.fields.onoff === 'on' ? `lcd.display();` : `lcd.noDisplay();`,
+      },
     },
   },
 
@@ -2418,59 +2698,294 @@ const LIBRARIES = {
     },
   },
 
-  // === Group 2 — "Premium" libraries (shells, blocks coming later) ===
+  // === Group 2 — "Advanced" libraries, unlocked by Hardcore Coder ===
+
+  // ---------------------------------------------------------
+  // INTERRUPTS
+  // ---------------------------------------------------------
+  // On Arduino Uno: only pins 2 and 3 support external interrupts (INT0 and INT1).
+  // Use with attachInterrupt(digitalPinToInterrupt(pin), ISR, mode).
   interrupts: {
-    id: 'interrupts', name: 'Interrupts', desc: 'Attach handlers to pin state changes. Coming soon.',
+    id: 'interrupts', name: 'Interrupts', desc: 'React instantly to pin changes.',
     color: '#f06292', premium: true,
     includes: [],
     globals: () => '',
     blocks: {
-      interruptsPlaceholder: {
+      interruptAttach: {
         cat: 'interrupts', kind: 'statement',
-        parts: [{t:'⚠ interrupts blocks — coming soon'}],
-        code: () => `// TODO: interrupts blocks not yet implemented`,
+        parts: [
+          {t:'when pin'}, {f:{name:'pin', type:'select', default:'2', options:['2','3']}},
+          {f:{name:'mode', type:'select', default:'RISING', options:['RISING','FALLING','CHANGE','LOW']}},
+          {t:'call'}, {f:{name:'fn', type:'text', default:'onButton'}},
+        ],
+        code: (b) => `attachInterrupt(digitalPinToInterrupt(${b.fields.pin}), ${b.fields.fn}, ${b.fields.mode});`,
+      },
+      interruptDetach: {
+        cat: 'interrupts', kind: 'statement',
+        parts: [
+          {t:'stop interrupt on pin'},
+          {f:{name:'pin', type:'select', default:'2', options:['2','3']}},
+        ],
+        code: (b) => `detachInterrupt(digitalPinToInterrupt(${b.fields.pin}));`,
+      },
+      interruptDefineISR: {
+        cat: 'interrupts', kind: 'hat', isContainer: true,
+        parts: [
+          {t:'interrupt handler'}, {f:{name:'fn', type:'text', default:'onButton'}},
+        ],
+        code: (b, gen) => {
+          const name = b.fields.fn || 'onISR';
+          return `void ${name}() {\n${gen.children(b, '  ')}}\n`;
+        },
+      },
+      interruptDisableAll: {
+        cat: 'interrupts', kind: 'statement',
+        parts: [{t:'disable all interrupts'}],
+        code: () => `noInterrupts();`,
+      },
+      interruptEnableAll: {
+        cat: 'interrupts', kind: 'statement',
+        parts: [{t:'enable all interrupts'}],
+        code: () => `interrupts();`,
+      },
+      interruptVolatileVar: {
+        cat: 'interrupts', kind: 'statement',
+        parts: [
+          {t:'declare volatile int'}, {f:{name:'var', type:'text', default:'flag'}},
+          {t:'= '}, {i:{name:'init', valueType:'number', default:'0'}},
+        ],
+        code: (b, gen) => {
+          gen.declareVolatileInt(b.fields.var);
+          return `${b.fields.var} = ${gen.input(b,'init')};`;
+        },
       },
     },
   },
 
+  // ---------------------------------------------------------
+  // SD CARD  (uses built-in SD.h)
+  // ---------------------------------------------------------
   sdcard: {
-    id: 'sdcard', name: 'SD Card', desc: 'Read/write files to an SD card. Coming soon.',
+    id: 'sdcard', name: 'SD Card', desc: 'Read and write files on an SD card.',
     color: '#9575cd', premium: true,
-    includes: [],
-    globals: () => '',
+    includes: ['<SPI.h>', '<SD.h>'],
+    globals: () => `File sdFile;\n`,
     blocks: {
-      sdcardPlaceholder: {
+      sdBegin: {
         cat: 'sdcard', kind: 'statement',
-        parts: [{t:'⚠ SD card blocks — coming soon'}],
-        code: () => `// TODO: SD card blocks not yet implemented`,
+        parts: [
+          {t:'SD begin (CS pin'},
+          {f:{name:'cs', type:'number', default:10}},
+          {t:')'},
+        ],
+        code: (b) => `SD.begin(${b.fields.cs});`,
+      },
+      sdOpen: {
+        cat: 'sdcard', kind: 'statement',
+        parts: [
+          {t:'open file'}, {f:{name:'name', type:'text', default:'log.txt'}},
+          {t:'for'},       {f:{name:'mode', type:'select', default:'write', options:['read','write','append']}},
+        ],
+        code: (b) => {
+          const modeMap = { read: 'FILE_READ', write: 'FILE_WRITE', append: 'FILE_WRITE' };
+          const mode = modeMap[b.fields.mode] || 'FILE_READ';
+          // FILE_WRITE mode in Arduino SD lib already appends to end of file
+          return `sdFile = SD.open("${b.fields.name}", ${mode});`;
+        },
+      },
+      sdWriteLine: {
+        cat: 'sdcard', kind: 'statement',
+        parts: [{t:'write line'}, {i:{name:'text', valueType:'any', default:'"data"'}}],
+        code: (b, gen) => `if (sdFile) sdFile.println(${gen.input(b,'text')});`,
+      },
+      sdWrite: {
+        cat: 'sdcard', kind: 'statement',
+        parts: [{t:'write'}, {i:{name:'text', valueType:'any', default:'"data"'}}],
+        code: (b, gen) => `if (sdFile) sdFile.print(${gen.input(b,'text')});`,
+      },
+      sdReadLine: {
+        cat: 'sdcard', kind: 'reporter', output: 'any',
+        parts: [{t:'read line from file'}],
+        code: () => `(sdFile ? sdFile.readStringUntil('\\n') : String(""))`,
+      },
+      sdAvailable: {
+        cat: 'sdcard', kind: 'reporter', output: 'boolean',
+        parts: [{t:'file has more data'}],
+        code: () => `(sdFile && sdFile.available() > 0)`,
+      },
+      sdClose: {
+        cat: 'sdcard', kind: 'statement',
+        parts: [{t:'close file'}],
+        code: () => `if (sdFile) sdFile.close();`,
+      },
+      sdExists: {
+        cat: 'sdcard', kind: 'reporter', output: 'boolean',
+        parts: [{t:'file'}, {f:{name:'name', type:'text', default:'log.txt'}}, {t:'exists'}],
+        code: (b) => `SD.exists("${b.fields.name}")`,
+      },
+      sdRemove: {
+        cat: 'sdcard', kind: 'statement',
+        parts: [{t:'delete file'}, {f:{name:'name', type:'text', default:'log.txt'}}],
+        code: (b) => `SD.remove("${b.fields.name}");`,
       },
     },
   },
 
+  // ---------------------------------------------------------
+  // KEYPAD MATRIX  (dropdown: library OR no-library polling)
+  // ---------------------------------------------------------
   keypad: {
-    id: 'keypad', name: 'Keypad Matrix', desc: '4×4 / 3×4 matrix keypad input. Coming soon.',
+    id: 'keypad', name: 'Keypad Matrix', desc: '4×4 / 3×4 matrix keypad input.',
     color: '#4dd0e1', premium: true,
-    includes: [],
-    globals: () => '',
+    includes: [],  // dynamic based on which blocks are used
+    globals: (state) => {
+      // Emit shared setup based on which blocks are in use
+      const uses = [...state.blocks.values()].filter(b => b.def && b.def.startsWith('keypad'));
+      if (!uses.length) return '';
+      const usingLibrary = uses.some(b => (b.fields && b.fields.impl) === 'library');
+      const usingPoll    = uses.some(b => !(b.fields && b.fields.impl) || (b.fields && b.fields.impl) === 'poll');
+      let out = '';
+      if (usingLibrary) {
+        // Adafruit Keypad — user must include the library
+        out += `#include <Keypad.h>\n`;
+        out += `const byte KEYPAD_ROWS = 4;\nconst byte KEYPAD_COLS = 4;\n`;
+        out += `char keypadKeys[KEYPAD_ROWS][KEYPAD_COLS] = {\n  {'1','2','3','A'},\n  {'4','5','6','B'},\n  {'7','8','9','C'},\n  {'*','0','#','D'}\n};\n`;
+        out += `byte keypadRowPins[KEYPAD_ROWS] = {9, 8, 7, 6};\n`;
+        out += `byte keypadColPins[KEYPAD_COLS] = {5, 4, 3, 2};\n`;
+        out += `Keypad keypad = Keypad(makeKeymap(keypadKeys), keypadRowPins, keypadColPins, KEYPAD_ROWS, KEYPAD_COLS);\n`;
+      }
+      if (usingPoll) {
+        // Manual polling — no library needed
+        out += `\n// Manual 4x4 keypad scan (no library needed)\n`;
+        out += `const byte POLL_ROWS = 4;\nconst byte POLL_COLS = 4;\n`;
+        out += `const byte pollRowPins[POLL_ROWS] = {9, 8, 7, 6};\n`;
+        out += `const byte pollColPins[POLL_COLS] = {5, 4, 3, 2};\n`;
+        out += `const char pollKeys[POLL_ROWS][POLL_COLS] = {\n  {'1','2','3','A'},\n  {'4','5','6','B'},\n  {'7','8','9','C'},\n  {'*','0','#','D'}\n};\n`;
+        out += `char pollScanKeypad() {\n`;
+        out += `  for (byte c = 0; c < POLL_COLS; c++) {\n`;
+        out += `    pinMode(pollColPins[c], OUTPUT);\n    digitalWrite(pollColPins[c], LOW);\n`;
+        out += `    for (byte r = 0; r < POLL_ROWS; r++) {\n`;
+        out += `      pinMode(pollRowPins[r], INPUT_PULLUP);\n`;
+        out += `      if (digitalRead(pollRowPins[r]) == LOW) {\n`;
+        out += `        pinMode(pollColPins[c], INPUT);\n`;
+        out += `        return pollKeys[r][c];\n      }\n    }\n`;
+        out += `    pinMode(pollColPins[c], INPUT);\n  }\n  return '\\0';\n}\n`;
+      }
+      return out;
+    },
     blocks: {
-      keypadPlaceholder: {
-        cat: 'keypad', kind: 'statement',
-        parts: [{t:'⚠ keypad blocks — coming soon'}],
-        code: () => `// TODO: keypad blocks not yet implemented`,
+      keypadGetKey: {
+        cat: 'keypad', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'get pressed key using'},
+          {f:{name:'impl', type:'select', default:'poll', options:['library','poll']}},
+        ],
+        code: (b) => b.fields.impl === 'library' ? `keypad.getKey()` : `pollScanKeypad()`,
+      },
+      keypadKeyPressed: {
+        cat: 'keypad', kind: 'reporter', output: 'boolean',
+        parts: [
+          {t:'any key pressed using'},
+          {f:{name:'impl', type:'select', default:'poll', options:['library','poll']}},
+        ],
+        code: (b) => {
+          const call = b.fields.impl === 'library' ? `keypad.getKey()` : `pollScanKeypad()`;
+          return `(${call} != NO_KEY && ${call} != '\\0')`;
+        },
+      },
+      keypadWaitForKey: {
+        cat: 'keypad', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'wait for key press using'},
+          {f:{name:'impl', type:'select', default:'poll', options:['library','poll']}},
+        ],
+        code: (b) => {
+          if (b.fields.impl === 'library') {
+            return `[](){ char k; do { k = keypad.getKey(); } while(k == NO_KEY); return k; }()`;
+          }
+          return `[](){ char k; do { k = pollScanKeypad(); } while(k == '\\0'); return k; }()`;
+        },
       },
     },
   },
 
+  // ---------------------------------------------------------
+  // STEPPER  (dropdown: Stepper.h OR AccelStepper)
+  // ---------------------------------------------------------
   stepper: {
-    id: 'stepper', name: 'Stepper Motor', desc: 'Precise motor control. Coming soon.',
+    id: 'stepper', name: 'Stepper Motor', desc: 'Precise motor control (Stepper.h or AccelStepper).',
     color: '#ffa726', premium: true,
     includes: [],
-    globals: () => '',
+    globals: (state) => {
+      const uses = [...state.blocks.values()].filter(b => b.def && b.def.startsWith('stepper'));
+      if (!uses.length) return '';
+      const usingAccel = uses.some(b => (b.fields && b.fields.impl) === 'accel');
+      const usingBasic = uses.some(b => !(b.fields && b.fields.impl) || (b.fields && b.fields.impl) === 'basic');
+      let out = '';
+      if (usingBasic) {
+        out += `#include <Stepper.h>\n`;
+        out += `const int STEPS_PER_REV = 200;\n`;
+        out += `Stepper myStepper(STEPS_PER_REV, 8, 9, 10, 11);\n`;
+      }
+      if (usingAccel) {
+        out += `#include <AccelStepper.h>\n`;
+        out += `AccelStepper myAccelStepper(AccelStepper::FULL4WIRE, 8, 9, 10, 11);\n`;
+      }
+      return out;
+    },
     blocks: {
-      stepperPlaceholder: {
+      stepperSetSpeed: {
         cat: 'stepper', kind: 'statement',
-        parts: [{t:'⚠ stepper blocks — coming soon'}],
-        code: () => `// TODO: stepper blocks not yet implemented`,
+        parts: [
+          {t:'set speed'}, {i:{name:'rpm', valueType:'number', default:'60'}}, {t:'rpm using'},
+          {f:{name:'impl', type:'select', default:'basic', options:['basic','accel']}},
+        ],
+        code: (b, gen) => {
+          if (b.fields.impl === 'accel') {
+            // AccelStepper takes steps/sec, not RPM. Assume 200 steps/rev.
+            return `myAccelStepper.setMaxSpeed((${gen.input(b,'rpm')}) * 200.0 / 60.0);`;
+          }
+          return `myStepper.setSpeed(${gen.input(b,'rpm')});`;
+        },
+      },
+      stepperStep: {
+        cat: 'stepper', kind: 'statement',
+        parts: [
+          {t:'step'}, {i:{name:'steps', valueType:'number', default:'200'}}, {t:'using'},
+          {f:{name:'impl', type:'select', default:'basic', options:['basic','accel']}},
+        ],
+        code: (b, gen) => {
+          if (b.fields.impl === 'accel') {
+            return `myAccelStepper.move(${gen.input(b,'steps')}); myAccelStepper.runToPosition();`;
+          }
+          return `myStepper.step(${gen.input(b,'steps')});`;
+        },
+      },
+      stepperSetAccel: {
+        cat: 'stepper', kind: 'statement',
+        parts: [
+          {t:'set acceleration'}, {i:{name:'accel', valueType:'number', default:'100'}},
+          {t:'steps/s² (AccelStepper only)'},
+        ],
+        code: (b, gen) => `myAccelStepper.setAcceleration(${gen.input(b,'accel')});`,
+      },
+      stepperRunNonblocking: {
+        cat: 'stepper', kind: 'statement',
+        parts: [{t:'stepper tick (AccelStepper non-blocking)'}],
+        code: () => `myAccelStepper.run();`,
+      },
+      stepperMoveTo: {
+        cat: 'stepper', kind: 'statement',
+        parts: [
+          {t:'move to position'}, {i:{name:'pos', valueType:'number', default:'0'}},
+          {t:'(AccelStepper)'},
+        ],
+        code: (b, gen) => `myAccelStepper.moveTo(${gen.input(b,'pos')});`,
+      },
+      stepperCurrentPosition: {
+        cat: 'stepper', kind: 'reporter', output: 'number',
+        parts: [{t:'current stepper position (AccelStepper)'}],
+        code: () => `myAccelStepper.currentPosition()`,
       },
     },
   },
@@ -2496,6 +3011,16 @@ const LIBRARIES = {
         parts: [{t:'ms elapsed since'}, {i:{name:'t', valueType:'number', default:'0'}}],
         code: (b, gen) => `(millis() - (${gen.input(b,'t')}))`,
       },
+      timingElapsedMicrosSince: {
+        cat: 'timing', kind: 'reporter', output: 'number',
+        parts: [{t:'µs elapsed since'}, {i:{name:'t', valueType:'number', default:'0'}}],
+        code: (b, gen) => `(micros() - (${gen.input(b,'t')}))`,
+      },
+      timingDelayMicros: {
+        cat: 'timing', kind: 'statement',
+        parts: [{t:'wait'}, {i:{name:'us', valueType:'number', default:'100'}}, {t:'µs (microseconds)'}],
+        code: (b, gen) => `delayMicroseconds(${gen.input(b,'us')});`,
+      },
       timingEveryMs: {
         cat: 'timing', kind: 'statement', isContainer: true,
         parts: [
@@ -2518,6 +3043,48 @@ const LIBRARIES = {
           gen.declareUnsignedLong(b.fields.var);
           return `while (millis() - ${b.fields.var} < (unsigned long)(${gen.input(b, 'ms')})) { /* poll */ } ${b.fields.var} = millis();`;
         },
+      },
+    },
+  },
+
+  random: {
+    id: 'random', name: 'Random', desc: 'Random number generation with seeds and ranges.',
+    color: '#66bb6a',
+    includes: [],
+    globals: () => '',
+    blocks: {
+      randomSeed: {
+        cat: 'random', kind: 'statement',
+        parts: [{t:'seed random with'}, {i:{name:'seed', valueType:'number', default:'analogRead(A0)'}}],
+        code: (b, gen) => `randomSeed(${gen.input(b,'seed')});`,
+      },
+      randomRange: {
+        cat: 'random', kind: 'reporter', output: 'number',
+        parts: [
+          {t:'random integer from'}, {i:{name:'lo', valueType:'number', default:'0'}},
+          {t:'to'}, {i:{name:'hi', valueType:'number', default:'100'}}, {t:'inclusive'},
+        ],
+        code: (b, gen) => `random(${gen.input(b,'lo')}, (${gen.input(b,'hi')}) + 1)`,
+      },
+      randomFloat01: {
+        cat: 'random', kind: 'reporter', output: 'number',
+        parts: [{t:'random decimal 0.0 to 1.0'}],
+        code: () => `(random(0, 10001) / 10000.0)`,
+      },
+      randomFloatRange: {
+        cat: 'random', kind: 'reporter', output: 'number',
+        parts: [
+          {t:'random decimal from'}, {i:{name:'lo', valueType:'number', default:'0'}},
+          {t:'to'}, {i:{name:'hi', valueType:'number', default:'1'}},
+        ],
+        code: (b, gen) => `(${gen.input(b,'lo')} + (random(0, 10001) / 10000.0) * ((${gen.input(b,'hi')}) - (${gen.input(b,'lo')})))`,
+      },
+      randomChance: {
+        cat: 'random', kind: 'reporter', output: 'boolean',
+        parts: [
+          {t:'random chance'}, {i:{name:'pct', valueType:'number', default:'50'}}, {t:'%'},
+        ],
+        code: (b, gen) => `(random(0, 100) < (${gen.input(b,'pct')}))`,
       },
     },
   },
@@ -2575,6 +3142,67 @@ const LIBRARIES = {
         cat: 'text', kind: 'reporter', output: 'any',
         parts: [{t:'number'}, {i:{name:'n', valueType:'number', default:'0'}}, {t:'as text'}],
         code: (b, gen) => `String(${gen.input(b,'n')})`,
+      },
+      textReplace: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'in'},      {i:{name:'s', valueType:'any', default:'"hello world"'}},
+          {t:'replace'}, {i:{name:'find', valueType:'any', default:'"world"'}},
+          {t:'with'},    {i:{name:'rep',  valueType:'any', default:'"there"'}},
+        ],
+        code: (b, gen) => `[](String s, String f, String r){ s.replace(f, r); return s; }(String(${gen.input(b,'s')}), String(${gen.input(b,'find')}), String(${gen.input(b,'rep')}))`,
+      },
+      textStartsWith: {
+        cat: 'text', kind: 'reporter', output: 'boolean',
+        parts: [
+          {t:'text'},        {i:{name:'s', valueType:'any', default:'"hello world"'}},
+          {t:'starts with'}, {i:{name:'q', valueType:'any', default:'"hello"'}},
+        ],
+        code: (b, gen) => `String(${gen.input(b,'s')}).startsWith(${gen.input(b,'q')})`,
+      },
+      textEndsWith: {
+        cat: 'text', kind: 'reporter', output: 'boolean',
+        parts: [
+          {t:'text'},      {i:{name:'s', valueType:'any', default:'"hello world"'}},
+          {t:'ends with'}, {i:{name:'q', valueType:'any', default:'"world"'}},
+        ],
+        code: (b, gen) => `String(${gen.input(b,'s')}).endsWith(${gen.input(b,'q')})`,
+      },
+      textCharAt: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'character'}, {i:{name:'idx', valueType:'number', default:'0'}},
+          {t:'of'},        {i:{name:'s',   valueType:'any',    default:'"hello"'}},
+        ],
+        code: (b, gen) => `String(${gen.input(b,'s')}).charAt(${gen.input(b,'idx')})`,
+      },
+      textIndexOf: {
+        cat: 'text', kind: 'reporter', output: 'number',
+        parts: [
+          {t:'position of'}, {i:{name:'q', valueType:'any', default:'"o"'}},
+          {t:'in'},          {i:{name:'s', valueType:'any', default:'"hello"'}},
+        ],
+        code: (b, gen) => `String(${gen.input(b,'s')}).indexOf(${gen.input(b,'q')})`,
+      },
+      textSplit: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'split'},    {i:{name:'s', valueType:'any', default:'"a,b,c"'}},
+          {t:'by'},       {i:{name:'delim', valueType:'any', default:'","'}},
+          {t:'get part'}, {i:{name:'n', valueType:'number', default:'0'}},
+        ],
+        // Splits s by delim and returns the Nth part. Simple linear scan.
+        code: (b, gen) => `[](String s, String d, int n){
+          int start = 0, idx = 0;
+          while (idx < n) {
+            int p = s.indexOf(d, start);
+            if (p < 0) return String("");
+            start = p + d.length();
+            idx++;
+          }
+          int end = s.indexOf(d, start);
+          return end < 0 ? s.substring(start) : s.substring(start, end);
+        }(String(${gen.input(b,'s')}), String(${gen.input(b,'delim')}), (${gen.input(b,'n')}))`,
       },
     },
   },
@@ -4265,6 +4893,8 @@ function generateCode() {
   const declaredServos = new Set();
   const declaredSweepStates = new Set();
   const declaredPinArrays = new Map(); // name -> size
+  const declaredUserArrays = new Map(); // name -> size (for lists)
+  const declaredVolatileInts = new Set();
   const rawIncludes = new Set();
   const gen = {
     indent: '',
@@ -4273,6 +4903,8 @@ function generateCode() {
     declareServo: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredServos.add(n); },
     declareSweepState: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredSweepStates.add(n); },
     declarePinArray: (n, size) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredPinArrays.set(n, Math.max(size, declaredPinArrays.get(n) || 0)); },
+    declareArray: (n, size) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredUserArrays.set(n, Math.max(size, declaredUserArrays.get(n) || 0)); },
+    declareVolatileInt: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredVolatileInts.add(n); },
     addRawInclude: (h) => { if (h) rawIncludes.add(h); },
     input: (b, slot) => {
       const childId = b.inputs[slot];
@@ -4385,6 +5017,34 @@ function generateCode() {
   if (declaredPinArrays.size) {
     if (!declaredVars.size && !declaredUnsignedLongs.size) out += '\n';
     for (const [v, sz] of declaredPinArrays) out += `int ${v}[${sz}];\n`;
+  }
+  if (declaredUserArrays.size) {
+    if (!declaredVars.size && !declaredUnsignedLongs.size && !declaredPinArrays.size) out += '\n';
+    for (const [v, sz] of declaredUserArrays) out += `int ${v}[${sz}] = {0};\n`;
+  }
+  if (declaredVolatileInts.size) {
+    out += '\n';
+    for (const v of declaredVolatileInts) out += `volatile int ${v} = 0;\n`;
+  }
+  // Edge-detection helper (emitted only if a pinEdgeDetect block is in use)
+  if (gen.needsEdgeDetect) {
+    out += `
+// Edge detection: tracks last state per pin. mode: 0=any change, 1=rising, 2=falling.
+bool pinEdge(int pin, int mode) {
+  static int lastState[20] = {0};
+  static bool initialized[20] = {false};
+  if (pin < 0 || pin >= 20) return false;
+  int cur = digitalRead(pin);
+  bool changed = initialized[pin] && (cur != lastState[pin]);
+  bool result = false;
+  if (mode == 0) result = changed;
+  else if (mode == 1) result = changed && cur == HIGH;
+  else if (mode == 2) result = changed && cur == LOW;
+  lastState[pin] = cur;
+  initialized[pin] = true;
+  return result;
+}
+`;
   }
   if (forwardDecls.length) {
     out += '\n// Function prototypes\n';
@@ -4681,7 +5341,7 @@ const SETTINGS_DEFS = [
   {
     key: 'hardcoreCoder',
     label: '💀🔥 HardCore Coder 🔥💀',
-    desc: '(No effect yet — placeholder for a future feature.)',
+    desc: '?????????????????????????????',
   },
 ];
 
