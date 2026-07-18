@@ -223,6 +223,39 @@ header button:hover { background: #252e3a; border-color: var(--accent); color: v
   pointer-events: none; z-index: 50;
 }
 
+/* Zoom widget in the corner of the workspace */
+#zoom-widget {
+  position: absolute;
+  right: 12px; bottom: 12px;
+  display: flex;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 3px;
+  z-index: 40;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+#zoom-widget button {
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  min-width: 28px;
+}
+#zoom-widget button:hover { background: var(--panel-2); color: var(--accent); }
+#zoom-widget #zoom-indicator {
+  min-width: 52px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--ink-dim);
+}
+#zoom-widget #zoom-indicator:hover { color: var(--accent); }
+
 #code-panel {
   grid-area: code;
   background: var(--panel);
@@ -1515,7 +1548,7 @@ body.hardcore-active header h1::after {
 <body>
 
 <header>
-  <h1>BlockDuino <span>v5.3 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v5.4 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1542,6 +1575,11 @@ body.hardcore-active header h1::after {
 
 <div id="workspace">
   <svg id="workspace-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="zoom-widget">
+    <button id="zoom-out" title="Zoom out">−</button>
+    <button id="zoom-indicator" title="Reset zoom (100%)">100%</button>
+    <button id="zoom-in" title="Zoom in">+</button>
+  </div>
 </div>
 
 <div class="resizer right" id="resizer-right"></div>
@@ -2780,6 +2818,10 @@ const state = {
   selection: new Set(),
   // Selection box drag state (when user is shift+right-drag dragging)
   selectBox: null,  // {x0,y0,x1,y1} in workspace coords while dragging
+  // Viewport (zoom + pan). zoom=1 means 100%. panX/Y offset viewBox origin.
+  viewport: { zoom: 1.0, panX: 0, panY: 0 },
+  // Panning drag state (middle-click drag)
+  panning: null,
 };
 function uid() { return 'b' + (state.nextId++); }
 function funcId() { return 'fn' + (state.nextFuncId++); }
@@ -3119,6 +3161,121 @@ function reporterPath(b, m) {
 const svgEl = document.getElementById('workspace-svg');
 const overlayEl = document.getElementById('drag-overlay');
 
+// ----------------------------------------------------------
+// Viewport (zoom + pan)
+// ----------------------------------------------------------
+const ZOOM_MIN = 0.1;      // 10% zoom out
+const ZOOM_MAX = 10.0;     // 1000% zoom in
+const ZOOM_STEP = 1.1;     // per wheel notch
+
+function applyViewport() {
+  const rect = svgEl.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  if (w <= 0 || h <= 0) return;
+  const vp = state.viewport;
+  const vw = w / vp.zoom;
+  const vh = h / vp.zoom;
+  svgEl.setAttribute('viewBox', `${vp.panX} ${vp.panY} ${vw} ${vh}`);
+  updateZoomIndicator();
+}
+
+// Convert a screen (clientX/Y) coordinate to workspace (SVG logical) coord
+function screenToWorkspaceX(clientX) {
+  const rect = svgEl.getBoundingClientRect();
+  return (clientX - rect.left) / state.viewport.zoom + state.viewport.panX;
+}
+function screenToWorkspaceY(clientY) {
+  const rect = svgEl.getBoundingClientRect();
+  return (clientY - rect.top) / state.viewport.zoom + state.viewport.panY;
+}
+
+// Zoom around a specific screen point (keeps that point stationary on screen)
+function zoomAt(screenX, screenY, newZoom) {
+  newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+  const rect = svgEl.getBoundingClientRect();
+  const localX = screenX - rect.left;
+  const localY = screenY - rect.top;
+  const vp = state.viewport;
+  // The workspace coord under the mouse before zoom
+  const wsX = localX / vp.zoom + vp.panX;
+  const wsY = localY / vp.zoom + vp.panY;
+  // Adjust pan so the same workspace coord stays under the same screen coord
+  vp.zoom = newZoom;
+  vp.panX = wsX - localX / vp.zoom;
+  vp.panY = wsY - localY / vp.zoom;
+  applyViewport();
+}
+
+// Pan by (dx, dy) in screen pixels (i.e. mouse drag delta)
+function panScreen(dx, dy) {
+  state.viewport.panX -= dx / state.viewport.zoom;
+  state.viewport.panY -= dy / state.viewport.zoom;
+  applyViewport();
+}
+
+function resetViewport() {
+  state.viewport.zoom = 1.0;
+  state.viewport.panX = 0;
+  state.viewport.panY = 0;
+  applyViewport();
+}
+
+function updateZoomIndicator() {
+  const ind = document.getElementById('zoom-indicator');
+  if (!ind) return;
+  ind.textContent = Math.round(state.viewport.zoom * 100) + '%';
+}
+
+// Wheel scroll → zoom at cursor
+svgEl.addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) return; // let the browser handle ctrl+wheel (browser zoom)
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? ZOOM_STEP : (1 / ZOOM_STEP);
+  zoomAt(e.clientX, e.clientY, state.viewport.zoom * factor);
+}, { passive: false });
+
+// Middle-click drag → pan
+svgEl.addEventListener('mousedown', e => {
+  if (e.button === 1) {
+    e.preventDefault();
+    state.panning = { startX: e.clientX, startY: e.clientY };
+    svgEl.style.cursor = 'grabbing';
+    window.addEventListener('mousemove', onPanMove);
+    window.addEventListener('mouseup', onPanUp);
+  }
+});
+function onPanMove(e) {
+  if (!state.panning) return;
+  const dx = e.clientX - state.panning.startX;
+  const dy = e.clientY - state.panning.startY;
+  state.panning.startX = e.clientX;
+  state.panning.startY = e.clientY;
+  panScreen(dx, dy);
+}
+function onPanUp() {
+  state.panning = null;
+  svgEl.style.cursor = '';
+  window.removeEventListener('mousemove', onPanMove);
+  window.removeEventListener('mouseup', onPanUp);
+}
+
+// Re-apply viewBox on window resize so viewBox math stays correct
+window.addEventListener('resize', applyViewport);
+// Initial apply on next frame (after layout settles)
+requestAnimationFrame(applyViewport);
+
+// Zoom widget buttons
+document.getElementById('zoom-in').addEventListener('click', () => {
+  const rect = svgEl.getBoundingClientRect();
+  zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, state.viewport.zoom * ZOOM_STEP);
+});
+document.getElementById('zoom-out').addEventListener('click', () => {
+  const rect = svgEl.getBoundingClientRect();
+  zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, state.viewport.zoom / ZOOM_STEP);
+});
+document.getElementById('zoom-indicator').addEventListener('click', resetViewport);
+
 function blockColor(b) {
   const cat = CATEGORIES.find(c => c.id === getDef(b).cat);
   return cat ? cat.colorHex : '#888';
@@ -3134,12 +3291,28 @@ function renderWorkspace() {
   while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
   while (overlayEl.firstChild) overlayEl.removeChild(overlayEl.firstChild);
   const draggedId = state.dragging ? state.dragging.id : null;
+  // For dragged blocks in the overlay: transform group so they appear at the right
+  // screen position AND scale to match zoom.
+  const vp = state.viewport;
+  const wsRect = svgEl.getBoundingClientRect();
+  let overlayGroup = null;
+  if (draggedId) {
+    overlayGroup = document.createElementNS(SVG_NS, 'g');
+    // The overlay is a full-screen SVG in raw pixels. To place a block whose
+    // workspace coord is (wx, wy) at the correct screen position, we need:
+    //   screen = wsRect.origin + (wx - pan) * zoom
+    // So the group's transform combines translate (to wsRect origin - pan*zoom)
+    // and scale (to zoom).
+    const tx = wsRect.left - vp.panX * vp.zoom;
+    const ty = wsRect.top  - vp.panY * vp.zoom;
+    overlayGroup.setAttribute('transform', `translate(${tx},${ty}) scale(${vp.zoom})`);
+    overlayEl.appendChild(overlayGroup);
+  }
   for (const tid of state.topBlocks) {
     const b = state.blocks.get(tid);
     if (!b) continue;
     if (tid === draggedId) {
-      const wsRect = svgEl.getBoundingClientRect();
-      renderStack(overlayEl, tid, b.x + wsRect.left, b.y + wsRect.top);
+      renderStack(overlayGroup, tid, b.x, b.y);
     } else {
       renderStack(svgEl, tid, b.x, b.y);
     }
@@ -3701,13 +3874,12 @@ document.getElementById('fn-modal').addEventListener('click', e => {
 function startPaletteDrag(e, defName) {
   e.preventDefault();
   pushHistorySnapshot();
-  const wsRect = svgEl.getBoundingClientRect();
   const tmp = makeBlock(defName, 0, 0);
-  const x = e.clientX - wsRect.left - 20;
-  const y = e.clientY - wsRect.top - 12;
+  const x = screenToWorkspaceX(e.clientX) - 20 / state.viewport.zoom;
+  const y = screenToWorkspaceY(e.clientY) - 12 / state.viewport.zoom;
   tmp.x = x; tmp.y = y;
   addBlock(tmp, true);
-  state.dragging = { id: tmp.id, offsetX: 20, offsetY: 12 };
+  state.dragging = { id: tmp.id, offsetX: 20 / state.viewport.zoom, offsetY: 12 / state.viewport.zoom };
   renderWorkspace();
   regenerate();
   window.addEventListener('pointermove', onPointerMove);
@@ -3726,9 +3898,8 @@ svgEl.addEventListener('pointerdown', e => {
   // ---- Shift+Right-click on empty workspace = start selection box ----
   if (!blockId && e.button === 2 && e.shiftKey) {
     e.preventDefault();
-    const wsRect = svgEl.getBoundingClientRect();
-    const sx = e.clientX - wsRect.left;
-    const sy = e.clientY - wsRect.top;
+    const sx = screenToWorkspaceX(e.clientX);
+    const sy = screenToWorkspaceY(e.clientY);
     state.selectBox = { x0: sx, y0: sy, x1: sx, y1: sy };
     // clear any prior single-block selection immediately
     state.selection = new Set();
@@ -3769,11 +3940,10 @@ svgEl.addEventListener('pointerdown', e => {
   detachBlock(blockId);
   b.x = worldX; b.y = worldY;
 
-  const wsRect = svgEl.getBoundingClientRect();
   state.dragging = {
     id: blockId,
-    offsetX: e.clientX - wsRect.left - b.x,
-    offsetY: e.clientY - wsRect.top - b.y,
+    offsetX: screenToWorkspaceX(e.clientX) - b.x,
+    offsetY: screenToWorkspaceY(e.clientY) - b.y,
   };
   renderWorkspace();
   regenerate();
@@ -3855,9 +4025,8 @@ function onPointerMove(e) {
   if (!state.dragging) return;
   const b = state.blocks.get(state.dragging.id);
   if (!b) return;
-  const wsRect = svgEl.getBoundingClientRect();
-  b.x = e.clientX - wsRect.left - state.dragging.offsetX;
-  b.y = e.clientY - wsRect.top - state.dragging.offsetY;
+  b.x = screenToWorkspaceX(e.clientX) - state.dragging.offsetX;
+  b.y = screenToWorkspaceY(e.clientY) - state.dragging.offsetY;
 
   const palette = document.getElementById('palette');
   const pRect = palette.getBoundingClientRect();
@@ -4780,9 +4949,8 @@ async function manualUpdateCheck() {
 // ============================================================
 function onSelectBoxMove(e) {
   if (!state.selectBox) return;
-  const wsRect = svgEl.getBoundingClientRect();
-  state.selectBox.x1 = e.clientX - wsRect.left;
-  state.selectBox.y1 = e.clientY - wsRect.top;
+  state.selectBox.x1 = screenToWorkspaceX(e.clientX);
+  state.selectBox.y1 = screenToWorkspaceY(e.clientY);
   // Live update selection based on box
   const bx = Math.min(state.selectBox.x0, state.selectBox.x1);
   const by = Math.min(state.selectBox.y0, state.selectBox.y1);
@@ -5524,10 +5692,9 @@ const clipboard = {
 
 // Track mouse in workspace for smart paste positioning
 svgEl.addEventListener('pointermove', e => {
-  const wsRect = svgEl.getBoundingClientRect();
   clipboard.mousePos = {
-    x: e.clientX - wsRect.left,
-    y: e.clientY - wsRect.top,
+    x: screenToWorkspaceX(e.clientX),
+    y: screenToWorkspaceY(e.clientY),
   };
 });
 
