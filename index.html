@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="blockduino-channel" content="release">
+<meta name="blockduino-channel" content="beta">
 <title>BlockDuino — visual Arduino programming</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1012,13 +1012,65 @@ text.bold { font-weight: 600; }
   100% { opacity: 0; }
 }
 
-/* Hardcore mode active indicator (subtle red glow on the header) */
+/* Hardcore mode active indicator — pulsing red glow behind the title, shaking skull */
+body.hardcore-active #workspace {
+  background-image: url('hardcore-bg.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-color: #0a0507;
+}
+body.hardcore-active #workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 5, 5, 0.55);
+  pointer-events: none;
+  z-index: 0;
+}
+body.hardcore-active #workspace-svg {
+  position: relative;
+  z-index: 1;
+}
 body.hardcore-active header h1 {
-  text-shadow: 0 0 8px rgba(255, 43, 43, 0.6);
+  position: relative;
+  color: #ffb0b0;
+  animation: hc-header-pulse 1.6s ease-in-out infinite;
+}
+@keyframes hc-header-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 8px rgba(255, 43, 43, 1),
+      0 0 16px rgba(255, 43, 43, 0.9),
+      0 0 32px rgba(255, 43, 43, 0.7),
+      0 0 48px rgba(255, 43, 43, 0.4);
+  }
+  50% {
+    text-shadow:
+      0 0 12px rgba(255, 80, 80, 1),
+      0 0 28px rgba(255, 60, 60, 1),
+      0 0 56px rgba(255, 43, 43, 0.9),
+      0 0 90px rgba(255, 43, 43, 0.6),
+      0 0 130px rgba(255, 43, 43, 0.35);
+  }
 }
 body.hardcore-active header h1::after {
   content: ' 💀';
-  filter: drop-shadow(0 0 4px #ff2b2b);
+  display: inline-block;
+  filter: drop-shadow(0 0 6px #ff2b2b) drop-shadow(0 0 12px rgba(255, 43, 43, 0.6));
+  animation:
+    hc-skull-startup 0.1s ease-out 1 forwards,
+    hc-skull-shake 0.2s ease-in-out infinite 0.1s;
+  transform-origin: center bottom;
+}
+@keyframes hc-skull-startup {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(4deg); }
+}
+@keyframes hc-skull-shake {
+  0%   { transform: rotate(-2deg); }
+  50%  { transform: rotate(2deg); }
+  100% { transform: rotate(-2deg); }
 }
 
 /* Menu button dramatic pulse (used after Hardcore cutscene to point at Libraries) */
@@ -1071,6 +1123,130 @@ body.hardcore-active header h1::after {
 @keyframes hc-arrow-nudge {
   from { transform: translateY(-50%) translateX(0); }
   to   { transform: translateY(-50%) translateX(-6px); }
+}
+
+/* ============================================================
+   Cathedral-light premium library styling (Group 2)
+   ============================================================ */
+
+/* Full-screen heavenly light beams — used during the Hardcore Coder reveal */
+#heavenly-beams {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  opacity: 0;
+  background:
+    linear-gradient(5deg,
+      transparent 15%, rgba(255, 240, 190, 0.10) 17%, rgba(255, 240, 190, 0.10) 19%, transparent 21%,
+      transparent 28%, rgba(255, 225, 160, 0.07) 30%, rgba(255, 225, 160, 0.07) 32%, transparent 34%,
+      transparent 45%, rgba(255, 245, 200, 0.16) 47%, rgba(255, 245, 200, 0.20) 50%, rgba(255, 245, 200, 0.16) 53%, transparent 55%,
+      transparent 63%, rgba(255, 225, 160, 0.07) 65%, rgba(255, 225, 160, 0.07) 67%, transparent 69%,
+      transparent 76%, rgba(255, 240, 190, 0.10) 78%, rgba(255, 240, 190, 0.10) 80%, transparent 82%);
+  mask: linear-gradient(180deg, black 0%, black 55%, transparent 100%);
+  -webkit-mask: linear-gradient(180deg, black 0%, black 55%, transparent 100%);
+  transition: opacity 1.5s ease-in;
+  display: none;
+}
+#heavenly-beams.show { display: block; opacity: 1; animation: heavenly-shimmer 6s ease-in-out infinite; }
+@keyframes heavenly-shimmer {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.25); }
+}
+
+/* Warm glow gradient at the top of the screen — light source */
+#heavenly-beams::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 30vh;
+  background: radial-gradient(ellipse at top, rgba(255, 235, 170, 0.35), transparent 70%);
+  pointer-events: none;
+}
+
+/* ============================================================
+   Cathedral-light premium library styling (dialog)
+   ============================================================ */
+.premium-section {
+  position: relative;
+  margin: -8px -12px 12px -12px;
+  padding: 14px 12px 8px 12px;
+  background: linear-gradient(180deg,
+    rgba(255, 220, 130, 0.14) 0%,
+    rgba(255, 200, 80, 0.08) 40%,
+    rgba(255, 180, 50, 0.03) 90%,
+    transparent 100%);
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+/* The descending cathedral light beams — angled gradient stripes coming down from the top */
+.premium-section::before {
+  content: '';
+  position: absolute;
+  inset: -20% 0 auto 0;
+  height: 140%;
+  background:
+    linear-gradient(15deg,
+      transparent 20%, rgba(255, 235, 180, 0.18) 22%, rgba(255, 235, 180, 0.18) 24%, transparent 26%,
+      transparent 34%, rgba(255, 220, 150, 0.12) 36%, rgba(255, 220, 150, 0.12) 38%, transparent 40%,
+      transparent 52%, rgba(255, 240, 200, 0.22) 54%, rgba(255, 240, 200, 0.22) 57%, transparent 59%,
+      transparent 68%, rgba(255, 220, 150, 0.12) 70%, rgba(255, 220, 150, 0.12) 72%, transparent 74%,
+      transparent 82%, rgba(255, 235, 180, 0.18) 84%, rgba(255, 235, 180, 0.18) 86%, transparent 88%);
+  mask: linear-gradient(180deg, black 0%, black 40%, transparent 90%);
+  -webkit-mask: linear-gradient(180deg, black 0%, black 40%, transparent 90%);
+  pointer-events: none;
+  animation: premium-shimmer 8s ease-in-out infinite;
+}
+
+/* Subtle shifting shimmer to make the light "breathe" */
+@keyframes premium-shimmer {
+  0%, 100% { opacity: 0.7; transform: translateY(0); }
+  50%      { opacity: 1.0; transform: translateY(-4px); }
+}
+
+/* Section title */
+.premium-title {
+  position: relative;
+  z-index: 2;
+  color: #ffd97a;
+  font-family: 'Fraunces', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-align: center;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 8px rgba(255, 200, 80, 0.6), 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Premium library items get a warm golden glow */
+.library-item.premium {
+  position: relative;
+  z-index: 2;
+  border-color: rgba(255, 200, 100, 0.4);
+  background: linear-gradient(135deg, rgba(60, 45, 20, 0.6), rgba(80, 60, 30, 0.4));
+  box-shadow: 0 0 12px rgba(255, 200, 100, 0.15), inset 0 0 20px rgba(255, 220, 150, 0.05);
+}
+.library-item.premium:hover {
+  border-color: rgba(255, 220, 130, 0.7);
+  box-shadow: 0 0 20px rgba(255, 200, 100, 0.35), inset 0 0 24px rgba(255, 220, 150, 0.1);
+}
+.library-item.premium .library-name {
+  color: #ffe5a0;
+  text-shadow: 0 0 6px rgba(255, 200, 100, 0.4);
+}
+.library-item.premium .library-desc {
+  color: #cdb078;
+}
+
+/* Divider between premium and regular libraries */
+.premium-divider {
+  position: relative;
+  z-index: 2;
+  height: 1px;
+  margin: 12px -4px;
+  background: linear-gradient(90deg, transparent, rgba(255, 200, 100, 0.4), transparent);
 }
 
 /* Update-available notification chip */
@@ -1251,7 +1427,7 @@ body.hardcore-active header h1::after {
 <body>
 
 <header>
-  <h1>BlockDuino <span>v3.8 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v5.0 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1408,6 +1584,9 @@ body.hardcore-active header h1::after {
   <div class="hc-corner bottom-right">GRAND RAPIDS, MI</div>
   <div class="hc-flash" id="hc-flash"></div>
 </div>
+
+<!-- Heavenly light beams (used after Hardcore cutscene when Libraries opens) -->
+<div id="heavenly-beams"></div>
 
 <!-- Eyelid reveal (used after cutscene to open Libraries) -->
 <!-- A curved SVG mask makes an actual eye shape — two arcing eyelids meeting -->
@@ -2032,6 +2211,63 @@ const LIBRARIES = {
         cat: 'wire', kind: 'reporter', output: 'number',
         parts: [{t:'Wire available'}],
         code: () => `Wire.available()`,
+      },
+    },
+  },
+
+  // === Group 2 — "Premium" libraries (shells, blocks coming later) ===
+  interrupts: {
+    id: 'interrupts', name: 'Interrupts', desc: 'Attach handlers to pin state changes. Coming soon.',
+    color: '#f06292', premium: true,
+    includes: [],
+    globals: () => '',
+    blocks: {
+      interruptsPlaceholder: {
+        cat: 'interrupts', kind: 'statement',
+        parts: [{t:'⚠ interrupts blocks — coming soon'}],
+        code: () => `// TODO: interrupts blocks not yet implemented`,
+      },
+    },
+  },
+
+  sdcard: {
+    id: 'sdcard', name: 'SD Card', desc: 'Read/write files to an SD card. Coming soon.',
+    color: '#9575cd', premium: true,
+    includes: [],
+    globals: () => '',
+    blocks: {
+      sdcardPlaceholder: {
+        cat: 'sdcard', kind: 'statement',
+        parts: [{t:'⚠ SD card blocks — coming soon'}],
+        code: () => `// TODO: SD card blocks not yet implemented`,
+      },
+    },
+  },
+
+  keypad: {
+    id: 'keypad', name: 'Keypad Matrix', desc: '4×4 / 3×4 matrix keypad input. Coming soon.',
+    color: '#4dd0e1', premium: true,
+    includes: [],
+    globals: () => '',
+    blocks: {
+      keypadPlaceholder: {
+        cat: 'keypad', kind: 'statement',
+        parts: [{t:'⚠ keypad blocks — coming soon'}],
+        code: () => `// TODO: keypad blocks not yet implemented`,
+      },
+    },
+  },
+
+  stepper: {
+    id: 'stepper', name: 'Stepper Motor', desc: 'Precise motor control. Coming soon.',
+    color: '#ffa726', premium: true,
+    includes: [],
+    globals: () => '',
+    blocks: {
+      stepperPlaceholder: {
+        cat: 'stepper', kind: 'statement',
+        parts: [{t:'⚠ stepper blocks — coming soon'}],
+        code: () => `// TODO: stepper blocks not yet implemented`,
       },
     },
   },
@@ -3852,9 +4088,19 @@ document.getElementById('b-copy').addEventListener('click', ()=> {
 function openLibraryModal() {
   const list = document.getElementById('lib-list');
   list.innerHTML = '';
+
+  // Split libraries into premium (Group 2) and regular
+  const premiumEntries = [];
+  const regularEntries = [];
   for (const [libId, lib] of Object.entries(LIBRARIES)) {
+    if (lib.premium) premiumEntries.push([libId, lib]);
+    else regularEntries.push([libId, lib]);
+  }
+
+  // Build a single row (used for both sections)
+  function makeRow(libId, lib) {
     const row = document.createElement('div');
-    row.className = 'library-item' + (state.activeLibraries.has(libId) ? ' active' : '');
+    row.className = 'library-item' + (state.activeLibraries.has(libId) ? ' active' : '') + (lib.premium ? ' premium' : '');
     row.innerHTML = `
       <input type="checkbox" ${state.activeLibraries.has(libId) ? 'checked' : ''}>
       <div class="library-swatch" style="background:${lib.color}"></div>
@@ -3898,12 +4144,38 @@ function openLibraryModal() {
         toggle();
       }
     });
-    list.appendChild(row);
+    return row;
   }
+
+  // Premium section (Group 2 — divine)
+  if (premiumEntries.length) {
+    const section = document.createElement('div');
+    section.className = 'premium-section';
+    const title = document.createElement('div');
+    title.className = 'premium-title';
+    title.textContent = '✦ Advanced Libraries ✦';
+    section.appendChild(title);
+    for (const [libId, lib] of premiumEntries) {
+      section.appendChild(makeRow(libId, lib));
+    }
+    list.appendChild(section);
+    // Divider between premium and regular
+    const divider = document.createElement('div');
+    divider.className = 'premium-divider';
+    list.appendChild(divider);
+  }
+
+  // Regular libraries
+  for (const [libId, lib] of regularEntries) {
+    list.appendChild(makeRow(libId, lib));
+  }
+
   document.getElementById('lib-modal').classList.add('show');
 }
 function closeLibraryModal() {
   document.getElementById('lib-modal').classList.remove('show');
+  const beams = document.getElementById('heavenly-beams');
+  if (beams) beams.classList.remove('show');
 }
 document.getElementById('lib-close').addEventListener('click', closeLibraryModal);
 document.getElementById('lib-modal').addEventListener('click', e => {
@@ -4333,8 +4605,70 @@ function redo() {
 // Full-screen ~9-second cinematic when enabling Hardcore Coder mode.
 // Layered audio (bass drone, sub sweep, tension riser, impact), plus visual
 // scanlines, code rain, corner HUD tags, RGB-split title, and loading bar.
-// Not skippable — commit to the bit.
+// Escape at any point skips the whole thing (cutscene + eye + Libraries reveal)
+// but leaves Hardcore Coder activated.
+
+// Tracks the currently-running hardcore sequence so Escape can abort it.
+const hardcoreSeq = {
+  active: false,
+  timeouts: [],        // pending setTimeouts to cancel
+  audioContexts: [],   // pending AudioContexts to close
+  animationFrames: [], // pending rAF handles to cancel
+};
+
+function hardcoreSchedule(fn, ms) {
+  const id = setTimeout(() => {
+    // Remove from list so it doesn't get cancelled after firing
+    const idx = hardcoreSeq.timeouts.indexOf(id);
+    if (idx >= 0) hardcoreSeq.timeouts.splice(idx, 1);
+    if (hardcoreSeq.active) fn();
+  }, ms);
+  hardcoreSeq.timeouts.push(id);
+  return id;
+}
+
+function hardcoreTrackAudio(ctx) {
+  if (ctx) hardcoreSeq.audioContexts.push(ctx);
+  return ctx;
+}
+
+function skipHardcoreSequence() {
+  if (!hardcoreSeq.active) return;
+  hardcoreSeq.active = false;
+  // Cancel all pending timeouts
+  for (const id of hardcoreSeq.timeouts) clearTimeout(id);
+  hardcoreSeq.timeouts = [];
+  // Cancel all pending animation frames
+  for (const id of hardcoreSeq.animationFrames) cancelAnimationFrame(id);
+  hardcoreSeq.animationFrames = [];
+  // Close all audio contexts to stop sound
+  for (const ctx of hardcoreSeq.audioContexts) {
+    try { ctx.close(); } catch(e) {}
+  }
+  hardcoreSeq.audioContexts = [];
+  // Hide all visuals
+  const overlay = document.getElementById('hardcore-cutscene');
+  if (overlay) overlay.classList.remove('active');
+  const eyelidSvg = document.getElementById('hc-eyelid-svg');
+  if (eyelidSvg) eyelidSvg.classList.remove('active');
+  const beams = document.getElementById('heavenly-beams');
+  if (beams) beams.classList.remove('show');
+  // Still activate Hardcore Coder — the skip only bypasses the *ceremony*
+  document.body.classList.add('hardcore-active');
+}
+
+// Escape key = skip
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && hardcoreSeq.active) {
+    e.preventDefault();
+    e.stopPropagation();
+    skipHardcoreSequence();
+  }
+}, true); // capture phase so we run before other Escape handlers
+
 function playHardcoreCutscene() {
+  hardcoreSeq.active = true;
+
   const overlay = document.getElementById('hardcore-cutscene');
   const topStrip = document.getElementById('hc-glitch-top');
   const botStrip = document.getElementById('hc-glitch-bottom');
@@ -4363,7 +4697,7 @@ function playHardcoreCutscene() {
   // Full symphonic audio — layered synthesis via Web Audio API
   let audioCtx = null;
   try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx = hardcoreTrackAudio(new (window.AudioContext || window.webkitAudioContext)());
     const now = audioCtx.currentTime;
     const master = audioCtx.createGain();
     master.gain.setValueAtTime(1.0, now);
@@ -4433,7 +4767,7 @@ function playHardcoreCutscene() {
     noise.start(now + 5.0);
     noise.stop(now + 8.6);
 
-    // === Layer 5: WARNING blips (sync with the yellow blinking) ===
+    // === Layer 5: WARNING blips ===
     for (let i = 0; i < 6; i++) {
       const t = now + 1.2 + i * 0.25;
       const beep = audioCtx.createOscillator();
@@ -4448,7 +4782,7 @@ function playHardcoreCutscene() {
       beep.stop(t + 0.15);
     }
 
-    // === Layer 6: TITLE SLAM — huge low kick when HARDCORE MODE appears ===
+    // === Layer 6: TITLE SLAM ===
     const kickT = now + 2.4;
     const kick = audioCtx.createOscillator();
     const kickGain = audioCtx.createGain();
@@ -4462,7 +4796,7 @@ function playHardcoreCutscene() {
     kick.start(kickT);
     kick.stop(kickT + 0.7);
 
-    // === Layer 7: FINAL IMPACT hit synced with the white flash ===
+    // === Layer 7: FINAL IMPACT ===
     const impactT = now + 8.4;
     const impact = audioCtx.createOscillator();
     const impactGain = audioCtx.createGain();
@@ -4476,7 +4810,7 @@ function playHardcoreCutscene() {
     impact.start(impactT);
     impact.stop(impactT + 0.8);
 
-    // === Layer 8: Impact noise burst (crash element) ===
+    // === Layer 8: Impact noise burst ===
     const crashBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.6, audioCtx.sampleRate);
     const crashData = crashBuf.getChannelData(0);
     for (let i = 0; i < crashData.length; i++) {
@@ -4494,24 +4828,144 @@ function playHardcoreCutscene() {
     crash.start(impactT);
   } catch(e) { /* audio blocked, no problem — visuals only */ }
 
-  // End cutscene after ~9.2s
-  setTimeout(() => {
+  // End cutscene after ~9.2s → move to eye/Libraries reveal
+  hardcoreSchedule(() => {
     overlay.classList.remove('active');
     document.body.classList.add('hardcore-active');
+    // Remove this audioCtx from tracking since we're closing it manually
     if (audioCtx) {
+      const idx = hardcoreSeq.audioContexts.indexOf(audioCtx);
+      if (idx >= 0) hardcoreSeq.audioContexts.splice(idx, 1);
       try { audioCtx.close(); } catch(e) {}
     }
-    // Now open the Libraries dialog dramatically
     revealLibrariesSequence();
   }, 9200);
+}
+
+// A sustained major chord synthesized to sound choir-like. Multiple sine
+// oscillators voiced across a C major triad (C, E, G) with octave doubling,
+// plus subtle vibrato and a slow bell-like fade in and out.
+function playHeavenlyChord() {
+  let ctx;
+  try {
+    ctx = hardcoreTrackAudio(new (window.AudioContext || window.webkitAudioContext)());
+  } catch(e) { return null; }
+
+  const now = ctx.currentTime;
+
+  // Master output with slow fade in and out
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, now);
+  master.gain.linearRampToValueAtTime(0.35, now + 2.5);   // slow angelic swell in
+  master.gain.setValueAtTime(0.35, now + 7.0);            // hold
+  master.gain.linearRampToValueAtTime(0, now + 10.5);     // slow fade out
+  master.connect(ctx.destination);
+
+  // A soft low-pass to warm things up (choirs don't have piercing highs)
+  const warmFilter = ctx.createBiquadFilter();
+  warmFilter.type = 'lowpass';
+  warmFilter.frequency.value = 2400;
+  warmFilter.Q.value = 0.7;
+  warmFilter.connect(master);
+
+  // A gentle reverb-ish delay tail (Web Audio doesn't do reverb natively, but
+  // a delay feedback loop approximates a cathedral space)
+  const delay = ctx.createDelay(0.5);
+  delay.delayTime.value = 0.28;
+  const delayGain = ctx.createGain();
+  delayGain.gain.value = 0.35;
+  const delayWet = ctx.createGain();
+  delayWet.gain.value = 0.4;
+  delay.connect(delayGain).connect(delay); // feedback
+  delay.connect(delayWet).connect(warmFilter);
+
+  // The chord voicing — C major triad with octave doublings
+  // Frequencies (Hz): C4=261.63, E4=329.63, G4=392.00, C5=523.25, E5=659.25, G5=783.99
+  const notes = [
+    { freq: 130.81, gain: 0.10 },  // C3  (low root — foundation)
+    { freq: 196.00, gain: 0.08 },  // G3
+    { freq: 261.63, gain: 0.14 },  // C4  (root)
+    { freq: 329.63, gain: 0.10 },  // E4
+    { freq: 392.00, gain: 0.10 },  // G4
+    { freq: 523.25, gain: 0.09 },  // C5
+    { freq: 659.25, gain: 0.06 },  // E5  (top shimmer)
+    { freq: 783.99, gain: 0.05 },  // G5
+  ];
+
+  // Each note is a stack of sine + slightly detuned triangle for choir shimmer,
+  // with slow LFO vibrato.
+  for (const n of notes) {
+    // Main sine
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(n.freq, now);
+    // Slightly detuned second voice (triangle for warmth)
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(n.freq * 1.003, now);  // ~5 cents up for chorus effect
+    // Third voice, another slight detune
+    const osc3 = ctx.createOscillator();
+    osc3.type = 'sine';
+    osc3.frequency.setValueAtTime(n.freq * 0.997, now);
+
+    // LFO for vibrato — very slow, very subtle
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 3.2 + Math.random() * 0.4;   // ~3-4 Hz, slightly different per note
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = n.freq * 0.003;  // very subtle depth
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
+    lfoGain.connect(osc3.frequency);
+    lfo.start(now);
+    lfo.stop(now + 11);
+
+    // Per-note gain envelope for gentle onset (staggered slightly for that "choir enters" feel)
+    const noteGain = ctx.createGain();
+    const noteDelay = Math.random() * 0.6;  // slight stagger up to 0.6s
+    noteGain.gain.setValueAtTime(0, now);
+    noteGain.gain.linearRampToValueAtTime(n.gain, now + 1.5 + noteDelay);
+    noteGain.gain.setValueAtTime(n.gain, now + 8.5);
+    noteGain.gain.linearRampToValueAtTime(0, now + 10.5);
+
+    osc1.connect(noteGain);
+    osc2.connect(noteGain);
+    osc3.connect(noteGain);
+    noteGain.connect(warmFilter);
+    noteGain.connect(delay);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc3.start(now);
+    osc1.stop(now + 11);
+    osc2.stop(now + 11);
+    osc3.stop(now + 11);
+  }
+
+  // Close the audio context when done
+  hardcoreSchedule(() => {
+    const idx = hardcoreSeq.audioContexts.indexOf(ctx);
+    if (idx >= 0) hardcoreSeq.audioContexts.splice(idx, 1);
+    try { ctx.close(); } catch(e) {}
+  }, 11500);
+  return ctx;
 }
 
 // After the Hardcore cutscene, open the Libraries dialog with an eyelid-open
 // effect: two curved SVG eyelids that arc together (like actual eye shape),
 // slowly peek, close, peek wider, close, then open fully to reveal the modal.
+// Also triggers full-screen heavenly light beams + a sustained angelic chord.
 function revealLibrariesSequence() {
   // Open the Libraries modal underneath the eyelids
   openLibraryModal();
+
+  // Trigger the full-screen light beams
+  const beams = document.getElementById('heavenly-beams');
+  if (beams) beams.classList.add('show');
+
+  // Play a peaceful sustained major chord (C major triad + gentle voicings)
+  playHeavenlyChord();
 
   const svg  = document.getElementById('hc-eyelid-svg');
   const top  = document.getElementById('hc-eyelid-top-path');
@@ -4616,19 +5070,24 @@ function revealLibrariesSequence() {
   updateEyelids(0);
 
   function frame(now) {
+    if (!hardcoreSeq.active) return;  // skipped, bail
     const elapsed = now - start;
     updateEyelids(interpKeyframes(elapsed));
     if (elapsed < totalMs) {
-      requestAnimationFrame(frame);
+      const rafId = requestAnimationFrame(frame);
+      hardcoreSeq.animationFrames.push(rafId);
     } else {
       svg.classList.remove('active');
+      // Also fully finish the sequence — skip flag stays false, but not active
+      hardcoreSeq.active = false;
     }
   }
-  requestAnimationFrame(frame);
+  const firstRaf = requestAnimationFrame(frame);
+  hardcoreSeq.animationFrames.push(firstRaf);
 
   // Audio: soft whooshes on each open, louder whoosh on the final full open
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = hardcoreTrackAudio(new (window.AudioContext || window.webkitAudioContext)());
     const now = ctx.currentTime;
     const openTimesMs = [500, 1900, 3300]; // start of each open motion
     openTimesMs.forEach((tms, i) => {
@@ -4649,7 +5108,11 @@ function revealLibrariesSequence() {
       noise.connect(filt).connect(g).connect(ctx.destination);
       noise.start(now + tms / 1000);
     });
-    setTimeout(() => { try { ctx.close(); } catch(e) {} }, totalMs + 300);
+    hardcoreSchedule(() => {
+      const idx = hardcoreSeq.audioContexts.indexOf(ctx);
+      if (idx >= 0) hardcoreSeq.audioContexts.splice(idx, 1);
+      try { ctx.close(); } catch(e) {}
+    }, totalMs + 300);
   } catch(e) {}
 }
 
