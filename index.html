@@ -886,7 +886,7 @@ text.bold { font-weight: 600; }
 <body>
 
 <header>
-  <h1>BlockDuino <span>v2.3 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v2.4 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -897,6 +897,7 @@ text.bold { font-weight: 600; }
         <div class="menu-divider"></div>
         <button class="menu-item" data-action="save">💾 Save</button>
         <button class="menu-item" data-action="load">📂 Load</button>
+        <button class="menu-item" data-action="check-update">🔄 Check for updates</button>
         <div class="menu-divider"></div>
         <button class="menu-item danger" data-action="clear">🗑 Clear All</button>
       </div>
@@ -3434,6 +3435,7 @@ menuDropdown.addEventListener('click', e => {
     case 'example':  loadExample(); break;
     case 'save':     saveState(); toast('Saved!'); break;
     case 'load':     loadState(); break;
+    case 'check-update': manualUpdateCheck(); break;
     case 'clear':    clearAll(); break;
   }
 });
@@ -3750,6 +3752,32 @@ setTimeout(() => {
   checkForUpdate();
   setInterval(checkForUpdate, UPDATE_CFG.intervalMs);
 }, 8000);
+
+// User-triggered update check with clear feedback for every outcome.
+async function manualUpdateCheck() {
+  toast('Checking for updates...');
+  const sha = await fetchLatestSha();
+  if (!sha) {
+    toast('Couldn\'t reach GitHub. Check your connection.');
+    return;
+  }
+  if (initialSha === null) {
+    // First check ever — treat this sha as current
+    initialSha = sha;
+    latestSha = sha;
+    toast('You\'re on the latest version.');
+    return;
+  }
+  if (sha === initialSha) {
+    toast('You\'re on the latest version.');
+    return;
+  }
+  // Newer than what we loaded
+  latestSha = sha;
+  // Manual check ignores dismissal — user explicitly asked
+  showUpdateChip();
+  toast('New version found!');
+}
 
 // ============================================================
 // Selection box (shift+right-drag)
