@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="blockduino-channel" content="beta">
+<meta name="blockduino-channel" content="alpha">
 <title>BlockDuino — visual Arduino programming</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -708,6 +708,371 @@ text.bold { font-weight: 600; }
   background: #0f1419;
 }
 
+/* ============================================================
+   Hardcore Coder cutscene — full-screen cinematic when toggled on
+   ============================================================ */
+#hardcore-cutscene {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+  overflow: hidden;
+  pointer-events: all;
+}
+#hardcore-cutscene.active {
+  display: flex;
+  animation: hc-fadein 0.6s ease-out, hc-bg-pulse 2s 0.6s infinite;
+}
+@keyframes hc-fadein {
+  from { background: rgba(0,0,0,0); }
+  to   { background: rgba(0,0,0,1); }
+}
+@keyframes hc-bg-pulse {
+  0%, 100% { background: #000; }
+  50%      { background: #1a0000; }
+}
+
+.hc-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 3px);
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+}
+#hardcore-cutscene.active .hc-scanlines {
+  animation: hc-scanlines-in 0.6s 0.3s forwards;
+}
+@keyframes hc-scanlines-in { to { opacity: 1; } }
+
+.hc-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.9) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hc-corner {
+  position: absolute;
+  color: #ff2b2b;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0;
+  text-shadow: 0 0 4px #ff2b2b;
+  z-index: 5;
+}
+.hc-corner.top-left     { top: 20px;    left: 20px;   }
+.hc-corner.top-right    { top: 20px;    right: 20px;  }
+.hc-corner.bottom-left  { bottom: 20px; left: 20px;   }
+.hc-corner.bottom-right { bottom: 20px; right: 20px;  }
+#hardcore-cutscene.active .hc-corner {
+  animation: hc-corner-in 0.4s 0.5s forwards, hc-corner-blink 0.6s 3s 3;
+}
+@keyframes hc-corner-in {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes hc-corner-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+.hc-code-rain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  opacity: 0;
+  color: #b00;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  pointer-events: none;
+}
+#hardcore-cutscene.active .hc-code-rain { animation: hc-rain-in 1s 0.6s forwards; }
+@keyframes hc-rain-in { to { opacity: 0.5; } }
+.hc-rain-col {
+  position: absolute;
+  top: -100%;
+  writing-mode: vertical-rl;
+  animation: hc-rain-fall linear infinite;
+  text-shadow: 0 0 4px #f00;
+  white-space: nowrap;
+}
+@keyframes hc-rain-fall {
+  from { transform: translateY(0); }
+  to   { transform: translateY(220vh); }
+}
+
+.hc-glitch-strip {
+  position: absolute;
+  left: 0; right: 0;
+  height: 40px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px;
+  color: #ff2b2b;
+  text-align: center;
+  letter-spacing: 8px;
+  opacity: 0;
+  text-shadow: 0 0 8px #ff2b2b, 0 0 16px #900, 0 0 32px #500;
+  z-index: 6;
+}
+#hc-glitch-top    { top: 6vh; }
+#hc-glitch-bottom { bottom: 6vh; }
+#hardcore-cutscene.active .hc-glitch-strip {
+  animation: hc-glitch 0.08s steps(2) infinite, hc-glitch-fade 8s forwards;
+}
+@keyframes hc-glitch {
+  0%   { transform: translateX(-6px) skewX(-2deg); }
+  50%  { transform: translateX(6px) skewX(2deg);  }
+  100% { transform: translateX(-3px) skewX(0deg); }
+}
+@keyframes hc-glitch-fade {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.hc-warning {
+  color: #ffd23f;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 32px;
+  letter-spacing: 10px;
+  opacity: 0;
+  text-shadow: 0 0 12px #ffd23f, 0 0 24px #a80;
+  z-index: 7;
+}
+#hardcore-cutscene.active .hc-warning {
+  animation: hc-warning-in 0.6s 0.6s forwards, hc-warning-blink 0.25s 1.2s 6, hc-warning-out 0.6s 6.4s forwards;
+}
+@keyframes hc-warning-in {
+  from { opacity: 0; transform: translateY(-30px) scale(0.7); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes hc-warning-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+@keyframes hc-warning-out { to { opacity: 0; } }
+
+.hc-title {
+  color: #ff2b2b;
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: clamp(56px, 14vw, 180px);
+  letter-spacing: 6px;
+  text-shadow: 0 0 20px #ff2b2b, 0 0 40px #900, 0 0 80px #500, 0 0 120px #300;
+  opacity: 0;
+  text-align: center;
+  z-index: 8;
+}
+#hardcore-cutscene.active .hc-title {
+  animation:
+    hc-title-in 1.4s 2.4s cubic-bezier(0.3, 1.8, 0.4, 1) forwards,
+    hc-shake 0.05s 3.8s infinite alternate,
+    hc-title-hold 3s 3.8s forwards;
+}
+@keyframes hc-title-in {
+  0%   { opacity: 0; transform: scale(6) rotate(-12deg); filter: blur(40px) brightness(3); }
+  50%  { opacity: 1; filter: blur(0) brightness(1.5); }
+  85%  { transform: scale(1.15) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0) brightness(1); }
+}
+@keyframes hc-shake {
+  from { transform: translate(-3px, 2px) rotate(-0.5deg); }
+  to   { transform: translate(3px, -2px) rotate(0.5deg); }
+}
+@keyframes hc-title-hold { to { opacity: 1; } }
+
+.hc-title-shadow {
+  position: absolute;
+  color: #00fff0;
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: clamp(56px, 14vw, 180px);
+  letter-spacing: 6px;
+  opacity: 0;
+  text-align: center;
+  z-index: 7;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+#hardcore-cutscene.active .hc-title-shadow {
+  animation:
+    hc-title-shadow-in 1.4s 2.4s cubic-bezier(0.3, 1.8, 0.4, 1) forwards,
+    hc-title-shadow-drift 0.1s 3.8s infinite alternate,
+    hc-title-hold 3s 3.8s forwards;
+}
+@keyframes hc-title-shadow-in {
+  0%   { opacity: 0; transform: scale(6) rotate(-12deg); filter: blur(40px); }
+  50%  { opacity: 0.6; filter: blur(0); }
+  100% { opacity: 0.5; transform: scale(1) rotate(0deg) translate(6px, -2px); }
+}
+@keyframes hc-title-shadow-drift {
+  from { transform: translate(6px, -2px); }
+  to   { transform: translate(-6px, 2px); }
+}
+
+.hc-subtitle {
+  color: #999;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 26px;
+  opacity: 0;
+  letter-spacing: 3px;
+  z-index: 8;
+}
+#hardcore-cutscene.active .hc-subtitle {
+  animation: hc-subtitle-in 1s 4.2s forwards, hc-warning-out 0.4s 6.4s forwards;
+}
+@keyframes hc-subtitle-in {
+  from { opacity: 0; letter-spacing: 20px; }
+  to   { opacity: 0.9; letter-spacing: 3px; }
+}
+
+.hc-loading-bar {
+  width: 400px;
+  max-width: 60vw;
+  height: 6px;
+  background: rgba(255, 43, 43, 0.2);
+  border: 1px solid #ff2b2b;
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0;
+  z-index: 8;
+  box-shadow: 0 0 12px rgba(255, 43, 43, 0.5);
+}
+#hardcore-cutscene.active .hc-loading-bar {
+  animation: hc-warning-in 0.4s 5.0s forwards, hc-warning-out 0.4s 8.0s forwards;
+}
+.hc-loading-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ff2b2b, #ffd23f, #ff2b2b);
+  box-shadow: 0 0 12px #ff2b2b;
+}
+#hardcore-cutscene.active .hc-loading-fill {
+  animation: hc-load 2.5s 5.2s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes hc-load {
+  0%  { width: 0; }
+  25% { width: 15%; }
+  40% { width: 22%; }
+  55% { width: 50%; }
+  70% { width: 62%; }
+  100% { width: 100%; }
+}
+
+.hc-status {
+  color: #56d2c9;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 40px;
+  letter-spacing: 8px;
+  opacity: 0;
+  text-shadow: 0 0 12px #56d2c9, 0 0 24px #56d2c9;
+  z-index: 8;
+}
+#hardcore-cutscene.active .hc-status {
+  animation:
+    hc-status-in 0.3s 7.8s forwards,
+    hc-status-flash 0.15s 7.8s 5 alternate;
+}
+@keyframes hc-status-in {
+  0%   { opacity: 0; transform: scale(0.5); filter: blur(20px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes hc-status-flash {
+  from { opacity: 1; }
+  to   { opacity: 0.2; }
+}
+
+.hc-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+#hardcore-cutscene.active .hc-flash {
+  animation: hc-flash-in 0.6s 8.4s forwards;
+}
+@keyframes hc-flash-in {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Hardcore mode active indicator (subtle red glow on the header) */
+body.hardcore-active header h1 {
+  text-shadow: 0 0 8px rgba(255, 43, 43, 0.6);
+}
+body.hardcore-active header h1::after {
+  content: ' 💀';
+  filter: drop-shadow(0 0 4px #ff2b2b);
+}
+
+/* Menu button dramatic pulse (used after Hardcore cutscene to point at Libraries) */
+@keyframes hc-lib-slam {
+  /* deprecated — kept for compatibility, not used anymore */
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Eyelid reveal — a curved SVG mask draws an actual almond eye shape */
+#hc-eyelid-svg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9998;
+  pointer-events: none;
+  display: none;
+}
+#hc-eyelid-svg.active { display: block; }
+@keyframes hc-menu-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 43, 43, 0.9);
+    background: var(--panel-2);
+    color: var(--accent-2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 24px 6px rgba(255, 43, 43, 0.9), 0 0 48px 12px rgba(255, 43, 43, 0.4);
+    background: #3a1010;
+    color: #ffb0b0;
+    transform: scale(1.1);
+  }
+}
+.menu-btn.hc-pulse {
+  animation: hc-menu-pulse 0.8s ease-in-out 4 forwards;
+  position: relative;
+  z-index: 200;
+}
+.menu-btn.hc-pulse::before {
+  content: '👉';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+  animation: hc-arrow-nudge 0.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 4px #ff2b2b);
+}
+@keyframes hc-arrow-nudge {
+  from { transform: translateY(-50%) translateX(0); }
+  to   { transform: translateY(-50%) translateX(-6px); }
+}
+
 /* Update-available notification chip */
 .update-chip {
   position: fixed;
@@ -886,7 +1251,7 @@ text.bold { font-weight: 600; }
 <body>
 
 <header>
-  <h1>BlockDuino <span>v2.4 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v3.8 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1023,6 +1388,44 @@ text.bold { font-weight: 600; }
     </div>
   </div>
 </div>
+
+<!-- Hardcore Coder cutscene overlay -->
+<div id="hardcore-cutscene">
+  <div class="hc-scanlines"></div>
+  <div class="hc-vignette"></div>
+  <div class="hc-glitch-strip" id="hc-glitch-top"></div>
+  <div class="hc-warning" id="hc-warning">⚠ SYSTEM ALERT ⚠</div>
+  <div class="hc-title" id="hc-title">HARDCORE MODE</div>
+  <div class="hc-title-shadow" id="hc-title-shadow">HARDCORE MODE</div>
+  <div class="hc-subtitle" id="hc-subtitle">There is no going back.</div>
+  <div class="hc-status" id="hc-status">/// INITIALIZED ///</div>
+  <div class="hc-glitch-strip" id="hc-glitch-bottom"></div>
+  <div class="hc-loading-bar"><div class="hc-loading-fill"></div></div>
+  <div class="hc-code-rain" id="hc-code-rain"></div>
+  <div class="hc-corner top-left">SYS.HARDCORE</div>
+  <div class="hc-corner top-right">v3.0 // ACTIVE</div>
+  <div class="hc-corner bottom-left">USER: GRAYSON // BSBANGMA</div>
+  <div class="hc-corner bottom-right">GRAND RAPIDS, MI</div>
+  <div class="hc-flash" id="hc-flash"></div>
+</div>
+
+<!-- Eyelid reveal (used after cutscene to open Libraries) -->
+<!-- A curved SVG mask makes an actual eye shape — two arcing eyelids meeting -->
+<svg id="hc-eyelid-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 100 100">
+  <defs>
+    <mask id="hc-eye-mask">
+      <!-- In a mask: WHITE = keep the overlay, BLACK = cut through it.
+           The whole screen starts BLACK (no overlay), then we paint the eyelid
+           shapes WHITE, so the eyelids appear as black overlay covering the
+           screen — with an eye-shaped opening between them showing through. -->
+      <rect x="0" y="0" width="100" height="100" fill="black"/>
+      <path id="hc-eyelid-top-path"    fill="white" d="M0,0 L100,0 L100,50 Q50,50 0,50 Z"/>
+      <path id="hc-eyelid-bottom-path" fill="white" d="M0,100 L100,100 L100,50 Q50,50 0,50 Z"/>
+    </mask>
+  </defs>
+  <!-- Full-screen black rect with the eye-mask applied: eyelid areas stay black, eye opening is transparent -->
+  <rect x="0" y="0" width="100" height="100" fill="black" mask="url(#hc-eye-mask)"/>
+</svg>
 
 <!-- Themed confirmation modal (replaces native confirm) -->
 <div class="modal-backdrop" id="confirm-modal" style="z-index: 300;">
@@ -2035,6 +2438,7 @@ const state = {
   settings: {
     advancedBlocks: false,
     pinPicker: false,
+    hardcoreCoder: false,
   },
   // Selection: Set of block IDs currently selected (gold outline)
   selection: new Set(),
@@ -3336,7 +3740,7 @@ function deserialize(data) {
     state.nextFuncId = data.nextFuncId || 1;
   }
   state.activeLibraries = new Set(data.activeLibraries || []);
-  state.settings = Object.assign({ advancedBlocks: false, pinPicker: false }, data.settings || {});
+  state.settings = Object.assign({ advancedBlocks: false, pinPicker: false, hardcoreCoder: false }, data.settings || {});
   applyActiveLibraries();
   rebuildFunctionDefs();
 }
@@ -3518,6 +3922,11 @@ const SETTINGS_DEFS = [
     label: 'Visual pin picker',
     desc: 'Adds a 📍 button next to pin number fields that opens a clickable Arduino board image. Supports selecting multiple pins (e.g. 1,3,5 or 2-7). Also unlocks new multi-pin blocks in the Pins category.',
   },
+  {
+    key: 'hardcoreCoder',
+    label: '💀🔥 HardCore Coder 🔥💀',
+    desc: '(No effect yet — placeholder for a future feature.)',
+  },
 ];
 
 function openSettingsModal() {
@@ -3561,6 +3970,14 @@ function openSettingsModal() {
       renderWorkspace();
       regenerate();
       saveState();
+      // Play Hardcore Coder cutscene when turning it ON
+      if (s.key === 'hardcoreCoder' && cb.checked) {
+        // Close settings modal first so user sees the cutscene, not a modal
+        closeSettingsModal();
+        playHardcoreCutscene();
+      } else if (s.key === 'hardcoreCoder' && !cb.checked) {
+        document.body.classList.remove('hardcore-active');
+      }
     });
     list.appendChild(row);
   }
@@ -3908,6 +4325,337 @@ function redo() {
     toast('Redo');
     history.lastFieldEditKey = null;
   } catch(e) { toast('Redo failed'); }
+}
+
+// ============================================================
+// Hardcore Coder cutscene
+// ============================================================
+// Full-screen ~9-second cinematic when enabling Hardcore Coder mode.
+// Layered audio (bass drone, sub sweep, tension riser, impact), plus visual
+// scanlines, code rain, corner HUD tags, RGB-split title, and loading bar.
+// Not skippable — commit to the bit.
+function playHardcoreCutscene() {
+  const overlay = document.getElementById('hardcore-cutscene');
+  const topStrip = document.getElementById('hc-glitch-top');
+  const botStrip = document.getElementById('hc-glitch-bottom');
+  const rainWrap = document.getElementById('hc-code-rain');
+  topStrip.textContent = '💀🔥💀🔥💀🔥💀🔥💀🔥💀🔥';
+  botStrip.textContent = '🔥💀🔥💀🔥💀🔥💀🔥💀🔥💀';
+
+  // Build code-rain columns
+  rainWrap.innerHTML = '';
+  const cols = Math.floor(window.innerWidth / 18);
+  const rainChars = '01ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍｦｲｸｺｿﾁﾄﾉﾌﾔﾖﾙﾚﾛﾝ0123456789ABCDEF';
+  for (let i = 0; i < cols; i++) {
+    const col = document.createElement('div');
+    col.className = 'hc-rain-col';
+    col.style.left = (i * 18) + 'px';
+    col.style.animationDuration = (2 + Math.random() * 4) + 's';
+    col.style.animationDelay = (-Math.random() * 4) + 's';
+    let s = '';
+    for (let j = 0; j < 40; j++) s += rainChars[Math.floor(Math.random() * rainChars.length)];
+    col.textContent = s;
+    rainWrap.appendChild(col);
+  }
+
+  overlay.classList.add('active');
+
+  // Full symphonic audio — layered synthesis via Web Audio API
+  let audioCtx = null;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const master = audioCtx.createGain();
+    master.gain.setValueAtTime(1.0, now);
+    master.connect(audioCtx.destination);
+
+    // === Layer 1: Deep sawtooth bass drone (35Hz → 90Hz sweep over 8s) ===
+    const bassOsc = audioCtx.createOscillator();
+    const bassGain = audioCtx.createGain();
+    bassOsc.type = 'sawtooth';
+    bassOsc.frequency.setValueAtTime(30, now);
+    bassOsc.frequency.exponentialRampToValueAtTime(45, now + 3.0);
+    bassOsc.frequency.exponentialRampToValueAtTime(60, now + 6.0);
+    bassOsc.frequency.exponentialRampToValueAtTime(90, now + 8.4);
+    bassGain.gain.setValueAtTime(0, now);
+    bassGain.gain.linearRampToValueAtTime(0.28, now + 0.8);
+    bassGain.gain.linearRampToValueAtTime(0.38, now + 7.5);
+    bassGain.gain.linearRampToValueAtTime(0.0, now + 8.7);
+    bassOsc.connect(bassGain).connect(master);
+    bassOsc.start(now);
+    bassOsc.stop(now + 9.0);
+
+    // === Layer 2: Triangle sub-bass (adds weight) ===
+    const sub = audioCtx.createOscillator();
+    const subGain = audioCtx.createGain();
+    sub.type = 'triangle';
+    sub.frequency.setValueAtTime(60, now);
+    sub.frequency.exponentialRampToValueAtTime(180, now + 8.4);
+    subGain.gain.setValueAtTime(0, now);
+    subGain.gain.linearRampToValueAtTime(0.12, now + 1.2);
+    subGain.gain.linearRampToValueAtTime(0.22, now + 7.8);
+    subGain.gain.linearRampToValueAtTime(0.0, now + 8.7);
+    sub.connect(subGain).connect(master);
+    sub.start(now);
+    sub.stop(now + 9.0);
+
+    // === Layer 3: Tension riser (high sine ramping up over the whole cutscene) ===
+    const riser = audioCtx.createOscillator();
+    const riserGain = audioCtx.createGain();
+    riser.type = 'sine';
+    riser.frequency.setValueAtTime(200, now + 0.5);
+    riser.frequency.exponentialRampToValueAtTime(4000, now + 8.3);
+    riserGain.gain.setValueAtTime(0, now + 0.5);
+    riserGain.gain.linearRampToValueAtTime(0.05, now + 2.0);
+    riserGain.gain.linearRampToValueAtTime(0.12, now + 8.0);
+    riserGain.gain.linearRampToValueAtTime(0.0, now + 8.5);
+    riser.connect(riserGain).connect(master);
+    riser.start(now + 0.5);
+    riser.stop(now + 8.6);
+
+    // === Layer 4: White noise sweep (adds tension whoosh) ===
+    const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseData.length; i++) noiseData[i] = Math.random() * 2 - 1;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    noise.loop = true;
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.Q.value = 3;
+    noiseFilter.frequency.setValueAtTime(200, now + 5.0);
+    noiseFilter.frequency.exponentialRampToValueAtTime(6000, now + 8.4);
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0, now + 5.0);
+    noiseGain.gain.linearRampToValueAtTime(0.15, now + 8.3);
+    noiseGain.gain.linearRampToValueAtTime(0, now + 8.5);
+    noise.connect(noiseFilter).connect(noiseGain).connect(master);
+    noise.start(now + 5.0);
+    noise.stop(now + 8.6);
+
+    // === Layer 5: WARNING blips (sync with the yellow blinking) ===
+    for (let i = 0; i < 6; i++) {
+      const t = now + 1.2 + i * 0.25;
+      const beep = audioCtx.createOscillator();
+      const beepGain = audioCtx.createGain();
+      beep.type = 'square';
+      beep.frequency.setValueAtTime(1200, t);
+      beepGain.gain.setValueAtTime(0, t);
+      beepGain.gain.linearRampToValueAtTime(0.08, t + 0.02);
+      beepGain.gain.linearRampToValueAtTime(0, t + 0.12);
+      beep.connect(beepGain).connect(master);
+      beep.start(t);
+      beep.stop(t + 0.15);
+    }
+
+    // === Layer 6: TITLE SLAM — huge low kick when HARDCORE MODE appears ===
+    const kickT = now + 2.4;
+    const kick = audioCtx.createOscillator();
+    const kickGain = audioCtx.createGain();
+    kick.type = 'sine';
+    kick.frequency.setValueAtTime(180, kickT);
+    kick.frequency.exponentialRampToValueAtTime(30, kickT + 0.5);
+    kickGain.gain.setValueAtTime(0, kickT);
+    kickGain.gain.linearRampToValueAtTime(0.7, kickT + 0.02);
+    kickGain.gain.exponentialRampToValueAtTime(0.001, kickT + 0.6);
+    kick.connect(kickGain).connect(master);
+    kick.start(kickT);
+    kick.stop(kickT + 0.7);
+
+    // === Layer 7: FINAL IMPACT hit synced with the white flash ===
+    const impactT = now + 8.4;
+    const impact = audioCtx.createOscillator();
+    const impactGain = audioCtx.createGain();
+    impact.type = 'square';
+    impact.frequency.setValueAtTime(180, impactT);
+    impact.frequency.exponentialRampToValueAtTime(20, impactT + 0.5);
+    impactGain.gain.setValueAtTime(0, impactT);
+    impactGain.gain.linearRampToValueAtTime(0.65, impactT + 0.03);
+    impactGain.gain.exponentialRampToValueAtTime(0.001, impactT + 0.7);
+    impact.connect(impactGain).connect(master);
+    impact.start(impactT);
+    impact.stop(impactT + 0.8);
+
+    // === Layer 8: Impact noise burst (crash element) ===
+    const crashBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.6, audioCtx.sampleRate);
+    const crashData = crashBuf.getChannelData(0);
+    for (let i = 0; i < crashData.length; i++) {
+      const decay = 1 - i / crashData.length;
+      crashData[i] = (Math.random() * 2 - 1) * decay * decay;
+    }
+    const crash = audioCtx.createBufferSource();
+    crash.buffer = crashBuf;
+    const crashHigh = audioCtx.createBiquadFilter();
+    crashHigh.type = 'highpass';
+    crashHigh.frequency.value = 2000;
+    const crashGain = audioCtx.createGain();
+    crashGain.gain.value = 0.35;
+    crash.connect(crashHigh).connect(crashGain).connect(master);
+    crash.start(impactT);
+  } catch(e) { /* audio blocked, no problem — visuals only */ }
+
+  // End cutscene after ~9.2s
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    document.body.classList.add('hardcore-active');
+    if (audioCtx) {
+      try { audioCtx.close(); } catch(e) {}
+    }
+    // Now open the Libraries dialog dramatically
+    revealLibrariesSequence();
+  }, 9200);
+}
+
+// After the Hardcore cutscene, open the Libraries dialog with an eyelid-open
+// effect: two curved SVG eyelids that arc together (like actual eye shape),
+// slowly peek, close, peek wider, close, then open fully to reveal the modal.
+function revealLibrariesSequence() {
+  // Open the Libraries modal underneath the eyelids
+  openLibraryModal();
+
+  const svg  = document.getElementById('hc-eyelid-svg');
+  const top  = document.getElementById('hc-eyelid-top-path');
+  const bot  = document.getElementById('hc-eyelid-bottom-path');
+  if (!svg || !top || !bot) return;
+
+  svg.classList.add('active');
+
+  // The "openness" is a number 0..1. 0 = fully closed (meet at y=50).
+  // 1 = fully open (eyelids past screen edge, no coverage).
+  // Peek open shows a thin slit; a bit more shows more; then full = eye wide open.
+  // The eyelids also *curve* — the middle bulges toward the closed position for the
+  // classic almond eye look. We drive that with a control point on a quadratic curve.
+  //
+  // Top path shape:    M0,0 L100,0 L100,{yEdge} Q50,{yCurve} 0,{yEdge} Z
+  //  where yEdge  is how far down the corners come (screen edge = 0, closed = 50),
+  //  and   yCurve is the curved bulge point (bulges toward middle when eye is open).
+  //
+  // Bottom path is a mirror around y=50.
+
+  // Keyframes as [time_ms, openness]
+  // openness 0.0 = fully closed
+  //           0.15 = thin slit (small peek)
+  //           0.35 = wider peek
+  //           1.0 = fully open
+  const kf = [
+    [0,     0.00],  // fully closed at start
+    [700,   0.13],  // slow open to small slit
+    [1100,  0.13],  // hold
+    [1450,  0.00],  // close
+    [2100,  0.32],  // slow open wider
+    [2500,  0.32],  // hold
+    [2850,  0.00],  // close
+    [3300,  0.00],  // pause in darkness
+    [5100,  1.00],  // slow full open
+  ];
+  const totalMs = 5300;
+  const start = performance.now();
+
+  function ease(t) {
+    // ease-in-out for each segment; makes it feel more organic
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function interpKeyframes(elapsed) {
+    if (elapsed <= kf[0][0]) return kf[0][1];
+    if (elapsed >= kf[kf.length - 1][0]) return kf[kf.length - 1][1];
+    for (let i = 0; i < kf.length - 1; i++) {
+      const [t0, v0] = kf[i];
+      const [t1, v1] = kf[i + 1];
+      if (elapsed >= t0 && elapsed <= t1) {
+        const localT = (elapsed - t0) / (t1 - t0);
+        return v0 + (v1 - v0) * ease(localT);
+      }
+    }
+    return kf[kf.length - 1][1];
+  }
+
+  function updateEyelids(openness) {
+    // Real eye shape: the OPENING is a horizontal almond in the middle of the
+    // screen, tapering to points at the far left/right corners of the almond
+    // (which sit somewhere between screen-center and screen-edge).
+    //
+    // The eyelids should retract UPWARD/DOWNWARD toward the top/bottom of the
+    // screen, and the eye opening should have curved edges that meet in points
+    // at each corner of the almond.
+    //
+    // We build the top eyelid as: cover the full top of the screen down to a
+    // curved edge that dips down to reveal an almond in the middle.
+    //
+    //  x=0 ------- x=100
+    //  |///////////////|  ← top of screen (covered)
+    //  |///////////////|
+    //  |\\\_________//|   ← curve that dips DOWN in the middle (openness)
+    //  |               |  ← eye opening
+    //  |///_________\\|   ← bottom eyelid curve (dips UP in the middle)
+    //  |///////////////|
+    //  |///////////////|  ← bottom of screen (covered)
+
+    // The eye's max height at fully open = 60% of screen height, centered.
+    // At the corners of the eye (x=10 and x=90), the curves meet at y=50 (closed point).
+    // In the middle (x=50), the top curve dips down to y = 50 - 30*openness,
+    // and the bottom curve dips up to y = 50 + 30*openness.
+    // At the far left and right of the SCREEN (x=0, x=100), the eyelid must
+    // still cover the whole vertical band — so those go to y=0 (top) and y=100 (bottom).
+
+    const eyeLeft = 10;    // where the almond starts, in %
+    const eyeRight = 90;   // where the almond ends
+    const midDip = openness * 40;  // how far the middle of each curve retracts from y=50
+
+    // Top eyelid path:
+    //   Start top-left (0,0), across top (100,0), down right side (100, eyeCornerY),
+    //   curve from right corner through middle-dip to left corner, up left side.
+    top.setAttribute('d',
+      `M0,0 L100,0 L100,50 L${eyeRight},50 Q50,${50 - midDip} ${eyeLeft},50 L0,50 Z`);
+
+    // Bottom eyelid path:
+    bot.setAttribute('d',
+      `M0,100 L100,100 L100,50 L${eyeRight},50 Q50,${50 + midDip} ${eyeLeft},50 L0,50 Z`);
+  }
+
+  updateEyelids(0);
+
+  function frame(now) {
+    const elapsed = now - start;
+    updateEyelids(interpKeyframes(elapsed));
+    if (elapsed < totalMs) {
+      requestAnimationFrame(frame);
+    } else {
+      svg.classList.remove('active');
+    }
+  }
+  requestAnimationFrame(frame);
+
+  // Audio: soft whooshes on each open, louder whoosh on the final full open
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const openTimesMs = [500, 1900, 3300]; // start of each open motion
+    openTimesMs.forEach((tms, i) => {
+      const dur = i === 2 ? 1.6 : 0.4;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let j = 0; j < data.length; j++) {
+        const decay = 1 - j / data.length;
+        data[j] = (Math.random() * 2 - 1) * decay * decay;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.frequency.value = i === 2 ? 1200 : 500;
+      const g = ctx.createGain();
+      g.gain.value = i === 2 ? 0.28 : 0.12;
+      noise.connect(filt).connect(g).connect(ctx.destination);
+      noise.start(now + tms / 1000);
+    });
+    setTimeout(() => { try { ctx.close(); } catch(e) {} }, totalMs + 300);
+  } catch(e) {}
+}
+
+// Apply the hardcore-active body class based on saved setting (no cutscene on reload)
+function applyHardcoreClass() {
+  document.body.classList.toggle('hardcore-active', !!(state.settings && state.settings.hardcoreCoder));
 }
 
 // ============================================================
@@ -4606,6 +5354,7 @@ try {
   }
 } catch(e) {}
 applyActiveLibraries();
+applyHardcoreClass();
 rebuildFunctionDefs();
 renderPalette();
 if (state.blocks.size === 0) {
