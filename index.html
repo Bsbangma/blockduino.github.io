@@ -760,6 +760,13 @@ text.bold { font-weight: 600; }
   stroke: var(--accent-2) !important;
   stroke-width: 2.5 !important;
 }
+/* Orphan blocks — their definition was removed (library disabled, etc.). Still clickable so user can delete or restore. */
+.block-shape.orphan {
+  fill: #3a2a2a !important;
+  stroke: #e06c75 !important;
+  stroke-width: 2 !important;
+  stroke-dasharray: 5 3;
+}
 
 /* Rubber-band selection box */
 .select-box {
@@ -823,7 +830,7 @@ text.bold { font-weight: 600; }
 <body>
 
 <header>
-  <h1>BlockDuino <span>v1.7 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v2.2 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -956,6 +963,18 @@ text.bold { font-weight: 600; }
     </label>
     <div class="btn-row">
       <button class="primary" id="welcome-close">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Themed confirmation modal (replaces native confirm) -->
+<div class="modal-backdrop" id="confirm-modal" style="z-index: 300;">
+  <div class="modal" style="width:460px;">
+    <h2 id="confirm-title">⚠️ Warning</h2>
+    <p id="confirm-message" style="color:var(--ink);font-size:13px;line-height:1.6;margin:0 0 16px 0;white-space:pre-wrap;"></p>
+    <div class="btn-row">
+      <button class="secondary" id="confirm-cancel">Cancel</button>
+      <button class="primary" id="confirm-ok">Continue</button>
     </div>
   </div>
 </div>
@@ -1549,6 +1568,224 @@ const LIBRARIES = {
       },
     },
   },
+
+  timing: {
+    id: 'timing', name: 'Timing', desc: 'Time-based blocks: millis, micros, non-blocking waits.',
+    color: '#7986cb',
+    includes: [],
+    globals: () => '',
+    blocks: {
+      timingMillis: {
+        cat: 'timing', kind: 'reporter', output: 'number',
+        parts: [{t:'milliseconds since start'}],
+        code: () => `millis()`,
+      },
+      timingMicros: {
+        cat: 'timing', kind: 'reporter', output: 'number',
+        parts: [{t:'microseconds since start'}],
+        code: () => `micros()`,
+      },
+      timingElapsedSince: {
+        cat: 'timing', kind: 'reporter', output: 'number',
+        parts: [{t:'ms elapsed since'}, {i:{name:'t', valueType:'number', default:'0'}}],
+        code: (b, gen) => `(millis() - (${gen.input(b,'t')}))`,
+      },
+      timingEveryMs: {
+        cat: 'timing', kind: 'statement', isContainer: true,
+        parts: [
+          {t:'every'}, {i:{name:'ms', valueType:'number', default:'1000'}},
+          {t:'ms using timer'}, {f:{name:'var', type:'text', default:'timer1'}},
+        ],
+        code: (b, gen) => {
+          gen.declareUnsignedLong(b.fields.var);
+          const inner = gen.children(b, gen.indent + '  ');
+          return `if (millis() - ${b.fields.var} >= (unsigned long)(${gen.input(b, 'ms')})) {\n${inner}${gen.indent}  ${b.fields.var} = millis();\n${gen.indent}}`;
+        },
+      },
+      timingMicrosNonblocking: {
+        cat: 'timing', kind: 'statement',
+        parts: [
+          {t:'wait for'}, {i:{name:'ms', valueType:'number', default:'1000'}},
+          {t:'ms without blocking, using'}, {f:{name:'var', type:'text', default:'waitStart'}},
+        ],
+        code: (b, gen) => {
+          gen.declareUnsignedLong(b.fields.var);
+          return `while (millis() - ${b.fields.var} < (unsigned long)(${gen.input(b, 'ms')})) { /* poll */ } ${b.fields.var} = millis();`;
+        },
+      },
+    },
+  },
+
+  text: {
+    id: 'text', name: 'Text (String)', desc: 'Work with text: join, format numbers, substrings.',
+    color: '#4db6ac',
+    includes: [],
+    globals: () => '',
+    blocks: {
+      textJoin: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'join'}, {i:{name:'a', valueType:'any', default:'"Hello, "'}},
+          {t:'and'},  {i:{name:'b', valueType:'any', default:'"world!"'}},
+        ],
+        code: (b, gen) => `(String(${gen.input(b,'a')}) + String(${gen.input(b,'b')}))`,
+      },
+      textLength: {
+        cat: 'text', kind: 'reporter', output: 'number',
+        parts: [{t:'length of'}, {i:{name:'s', valueType:'any', default:'"hello"'}}],
+        code: (b, gen) => `String(${gen.input(b,'s')}).length()`,
+      },
+      textSubstring: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [
+          {t:'substring of'}, {i:{name:'s', valueType:'any', default:'"hello world"'}},
+          {t:'from'},         {i:{name:'a', valueType:'number', default:'0'}},
+          {t:'to'},           {i:{name:'b', valueType:'number', default:'5'}},
+        ],
+        code: (b, gen) => `String(${gen.input(b,'s')}).substring(${gen.input(b,'a')}, ${gen.input(b,'b')})`,
+      },
+      textUpper: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [{t:'uppercase of'}, {i:{name:'s', valueType:'any', default:'"hello"'}}],
+        code: (b, gen) => {
+          // Arduino's toUpperCase() modifies in place; use a temp lambda
+          return `[](String s){ s.toUpperCase(); return s; }(String(${gen.input(b,'s')}))`;
+        },
+      },
+      textLower: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [{t:'lowercase of'}, {i:{name:'s', valueType:'any', default:'"HELLO"'}}],
+        code: (b, gen) => `[](String s){ s.toLowerCase(); return s; }(String(${gen.input(b,'s')}))`,
+      },
+      textContains: {
+        cat: 'text', kind: 'reporter', output: 'boolean',
+        parts: [
+          {t:'text'},      {i:{name:'s', valueType:'any', default:'"hello world"'}},
+          {t:'contains'},  {i:{name:'q', valueType:'any', default:'"world"'}},
+        ],
+        code: (b, gen) => `(String(${gen.input(b,'s')}).indexOf(${gen.input(b,'q')}) >= 0)`,
+      },
+      textNumberToString: {
+        cat: 'text', kind: 'reporter', output: 'any',
+        parts: [{t:'number'}, {i:{name:'n', valueType:'number', default:'0'}}, {t:'as text'}],
+        code: (b, gen) => `String(${gen.input(b,'n')})`,
+      },
+    },
+  },
+
+  distance: {
+    id: 'distance', name: 'Distance (HC-SR04)', desc: 'Ultrasonic distance sensor. Uses pulseIn — no library needed.',
+    color: '#4fc3f7',
+    includes: [],
+    globals: (state) => {
+      // Emit a helper function only if any distance block is in use
+      const usingDistance = [...state.blocks.values()].some(b =>
+        b.def && b.def.startsWith('distance')
+      );
+      if (!usingDistance) return '';
+      return `// Read HC-SR04 distance. Returns cm; returns -1 on timeout.
+long hcsr04ReadCm(int trigPin, int echoPin) {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  long dur = pulseIn(echoPin, HIGH, 30000UL); // 30ms timeout ~ 5m
+  if (dur == 0) return -1;
+  return dur / 58; // sound speed conversion
+}
+`;
+    },
+    blocks: {
+      distanceReadCm: {
+        cat: 'distance', kind: 'reporter', output: 'number',
+        parts: [
+          {t:'distance cm from trig'}, {f:{name:'trig', type:'number', default:9}},
+          {t:'echo'},                  {f:{name:'echo', type:'number', default:10}},
+        ],
+        code: (b) => `hcsr04ReadCm(${b.fields.trig}, ${b.fields.echo})`,
+      },
+      distanceReadInches: {
+        cat: 'distance', kind: 'reporter', output: 'number',
+        parts: [
+          {t:'distance inches from trig'}, {f:{name:'trig', type:'number', default:9}},
+          {t:'echo'},                      {f:{name:'echo', type:'number', default:10}},
+        ],
+        code: (b) => `(hcsr04ReadCm(${b.fields.trig}, ${b.fields.echo}) / 2.54)`,
+      },
+    },
+  },
+
+  servoSweep: {
+    id: 'servoSweep', name: 'Servo Sweep', desc: 'Non-blocking servo sweep/ease. Requires the Servo library to be active.',
+    color: '#ff8a80',
+    includes: ['<Servo.h>'],
+    globals: (state) => {
+      const usingSweep = [...state.blocks.values()].some(b =>
+        b.def && b.def.startsWith('servoSweep')
+      );
+      if (!usingSweep) return '';
+      return `// Non-blocking servo sweep helper. Call each loop iteration.
+struct SweepState { unsigned long startTime; int fromAngle; int toAngle; int duration; bool active; };
+void servoSweepStep(Servo &s, SweepState &st) {
+  if (!st.active) return;
+  unsigned long now = millis();
+  unsigned long elapsed = now - st.startTime;
+  if (elapsed >= (unsigned long)st.duration) {
+    s.write(st.toAngle);
+    st.active = false;
+    return;
+  }
+  float t = (float)elapsed / (float)st.duration;
+  int a = st.fromAngle + (int)((st.toAngle - st.fromAngle) * t);
+  s.write(a);
+}
+void servoSweepStart(SweepState &st, int fromAngle, int toAngle, int duration) {
+  st.fromAngle = fromAngle;
+  st.toAngle = toAngle;
+  st.duration = duration;
+  st.startTime = millis();
+  st.active = true;
+}
+`;
+    },
+    blocks: {
+      servoSweepStart: {
+        cat: 'servoSweep', kind: 'statement',
+        parts: [
+          {t:'start sweep'}, {f:{name:'name', type:'text', default:'myServo'}},
+          {t:'from'},        {i:{name:'from', valueType:'number', default:'0'}},
+          {t:'to'},          {i:{name:'to',   valueType:'number', default:'180'}},
+          {t:'over'},        {i:{name:'dur',  valueType:'number', default:'1000'}},
+          {t:'ms'},
+        ],
+        code: (b, gen) => {
+          gen.declareServo(b.fields.name);
+          gen.declareSweepState(b.fields.name);
+          return `servoSweepStart(${b.fields.name}_sweep, ${gen.input(b,'from')}, ${gen.input(b,'to')}, ${gen.input(b,'dur')});`;
+        },
+      },
+      servoSweepStep: {
+        cat: 'servoSweep', kind: 'statement',
+        parts: [{t:'update sweep'}, {f:{name:'name', type:'text', default:'myServo'}}],
+        code: (b, gen) => {
+          gen.declareServo(b.fields.name);
+          gen.declareSweepState(b.fields.name);
+          return `servoSweepStep(${b.fields.name}, ${b.fields.name}_sweep);`;
+        },
+      },
+      servoSweepBusy: {
+        cat: 'servoSweep', kind: 'reporter', output: 'boolean',
+        parts: [{t:'sweep of'}, {f:{name:'name', type:'text', default:'myServo'}}, {t:'is running'}],
+        code: (b, gen) => {
+          gen.declareSweepState(b.fields.name);
+          return `${b.fields.name}_sweep.active`;
+        },
+      },
+    },
+  },
 };
 
 // Multi-pin blocks — only registered when settings.pinPicker is true.
@@ -1906,8 +2143,26 @@ const SVG = { textWidth: s => s.length * 7.2 };
 
 // Compute layout for a block: returns
 //   { width, headerH, totalH (statement) or h (reporter), parts: [{x, w, ...}] }
+// A placeholder def used when a block references a definition that's been unloaded
+// (e.g. the user turned off a library that had blocks in the workspace).
+// The block still exists in state but renders as a dim "orphan" marker.
+const ORPHAN_DEF = {
+  cat: '__orphan__',
+  kind: 'statement',
+  isContainer: false,
+  isOrphan: true,
+  parts: [{t:'⚠ missing block'}],
+  code: (b) => `// ⚠ Missing block "${b.def}" — turn its library/setting back on to see this block.`,
+};
+
+// Safe def lookup. Returns ORPHAN_DEF for blocks whose definition has been removed.
+function getDef(b) {
+  if (!b) return ORPHAN_DEF;
+  return BLOCK_DEFS[b.def] || ORPHAN_DEF;
+}
+
 function measureBlock(b) {
-  const def = BLOCK_DEFS[b.def];
+  const def = getDef(b);
   const isReporter = def.kind === 'reporter';
   const isContainer = def.isContainer;
 
@@ -1993,7 +2248,7 @@ function measureStack(id) {
 // Path generators
 // ----------------------------------------------------------
 function statementPath(b, m) {
-  const def = BLOCK_DEFS[b.def];
+  const def = getDef(b);
   const r = LAYOUT.cornerR;
   const w = m.width;
   const nx = LAYOUT.notchOffset, nw = LAYOUT.notchWidth, nh = LAYOUT.notchHeight;
@@ -2042,7 +2297,7 @@ function statementPath(b, m) {
 
 // Reporter blocks are pill-shaped (number) or hexagon-ish (boolean)
 function reporterPath(b, m) {
-  const def = BLOCK_DEFS[b.def];
+  const def = getDef(b);
   const w = m.width, h = m.totalH;
   if (def.output === 'boolean') {
     // hexagon
@@ -2061,7 +2316,7 @@ const svgEl = document.getElementById('workspace-svg');
 const overlayEl = document.getElementById('drag-overlay');
 
 function blockColor(b) {
-  const cat = CATEGORIES.find(c => c.id === BLOCK_DEFS[b.def].cat);
+  const cat = CATEGORIES.find(c => c.id === getDef(b).cat);
   return cat ? cat.colorHex : '#888';
 }
 function darken(hex, a=0.65) {
@@ -2113,7 +2368,7 @@ function renderStack(parent, id, x, y) {
 }
 
 function renderBlock(parent, b, x, y, m) {
-  const def = BLOCK_DEFS[b.def];
+  const def = getDef(b);
   const color = blockColor(b);
   const dark = darken(color);
   const g = document.createElementNS(SVG_NS, 'g');
@@ -2129,9 +2384,17 @@ function renderBlock(parent, b, x, y, m) {
   shape.setAttribute('stroke', dark);
   shape.setAttribute('stroke-width', '1.5');
   shape.classList.add('block-shape');
+  if (def.isOrphan) shape.classList.add('orphan');
   if (state.selection && state.selection.has(b.id)) shape.classList.add('selected');
   shape.dataset.blockId = b.id;
   g.appendChild(shape);
+
+  // For orphans, add a helpful tooltip
+  if (def.isOrphan) {
+    const title = document.createElementNS(SVG_NS, 'title');
+    title.textContent = `Missing block "${b.def}". Turn its library back on or delete this block.`;
+    g.appendChild(title);
+  }
 
   // Render parts (label/field/input) inside the header
   const headerH = m.headerH;
@@ -2183,12 +2446,12 @@ function renderBlock(parent, b, x, y, m) {
 }
 
 function renderEmptySocket(parent, b, slot, part) {
-  const def = BLOCK_DEFS[b.def];
+  const def = getDef(b);
   const partDef = def.parts.find(p => p.i && p.i.name === slot).i;
   const isBool = partDef.valueType === 'boolean';
   const w = part.w, h = part.h;
   const yy = part.x ? (parent._headerY || 0) : 0; // unused
-  const cy = (BLOCK_DEFS[b.def].kind === 'reporter' ? measureBlock(b).headerH/2 : measureBlock(b).headerH/2);
+  const cy = (getDef(b).kind === 'reporter' ? measureBlock(b).headerH/2 : measureBlock(b).headerH/2);
   const y = cy - h/2;
 
   const socket = document.createElementNS(SVG_NS, 'path');
@@ -2697,7 +2960,7 @@ function cleanupListeners() {
 // Snap logic
 // ----------------------------------------------------------
 function findSnapTarget(dragged) {
-  const def = BLOCK_DEFS[dragged.def];
+  const def = getDef(dragged);
   if (def.kind === 'hat') return null;
   const isReporter = def.kind === 'reporter';
 
@@ -2716,14 +2979,14 @@ function findSnapTarget(dragged) {
 
     if (!isReporter) {
       // Snap as next (bottom of another statement block)
-      if (BLOCK_DEFS[b.def].kind !== 'reporter' && !b.next) {
+      if (getDef(b).kind !== 'reporter' && !b.next) {
         const spx = bx + LAYOUT.notchOffset;
         const spy = by + bm.totalH;
         const d = Math.hypot(dragX + LAYOUT.notchOffset - spx, dragY - spy);
         if (d < bestDist) { best = { type:'next', targetId:id, x:bx, y:spy }; bestDist = d; }
       }
       // Snap as first child of container
-      if (BLOCK_DEFS[b.def].isContainer && b.children.length === 0) {
+      if (getDef(b).isContainer && b.children.length === 0) {
         const spx = bx + LAYOUT.mouthIndent + LAYOUT.notchOffset;
         const spy = by + bm.headerH;
         const d = Math.hypot(dragX + LAYOUT.notchOffset - spx, dragY - spy);
@@ -2737,7 +3000,7 @@ function findSnapTarget(dragged) {
       for (const part of bm.partsLayout) {
         if (part.kind !== 'input') continue;
         if (b.inputs[part.slot]) continue;
-        const slotDef = BLOCK_DEFS[b.def].parts.find(p => p.i && p.i.name === part.slot).i;
+        const slotDef = getDef(b).parts.find(p => p.i && p.i.name === part.slot).i;
         // Allow plugging anything into 'any'; number reporters into number sockets; boolean into boolean.
         if (slotDef.valueType !== 'any' && slotDef.valueType !== def.output) continue;
         // The socket's center in world coords:
@@ -2816,13 +3079,17 @@ function snapTo(b, target) {
 // ----------------------------------------------------------
 function generateCode() {
   const declaredVars = new Set();
+  const declaredUnsignedLongs = new Set();
   const declaredServos = new Set();
+  const declaredSweepStates = new Set();
   const declaredPinArrays = new Map(); // name -> size
   const rawIncludes = new Set();
   const gen = {
     indent: '',
     declareInt: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredVars.add(n); },
+    declareUnsignedLong: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredUnsignedLongs.add(n); },
     declareServo: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredServos.add(n); },
+    declareSweepState: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredSweepStates.add(n); },
     declarePinArray: (n, size) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredPinArrays.set(n, Math.max(size, declaredPinArrays.get(n) || 0)); },
     addRawInclude: (h) => { if (h) rawIncludes.add(h); },
     input: (b, slot) => {
@@ -2830,10 +3097,10 @@ function generateCode() {
       if (childId) {
         const child = state.blocks.get(childId);
         if (!child) return '0';
-        return BLOCK_DEFS[child.def].code(child, gen);
+        return getDef(child).code(child, gen);
       }
       // Empty socket: use literal default
-      const part = BLOCK_DEFS[b.def].parts.find(p => p.i && p.i.name === slot);
+      const part = getDef(b).parts.find(p => p.i && p.i.name === slot);
       return part ? String(part.i.default) : '0';
     },
     children: (b, indent) => {
@@ -2849,7 +3116,7 @@ function generateCode() {
     const b = state.blocks.get(id);
     if (!b) return '';
     const save = gen.indent; gen.indent = indent;
-    const line = BLOCK_DEFS[b.def].code(b, gen);
+    const line = getDef(b).code(b, gen);
     gen.indent = save;
     let out = indent + line + '\n';
     if (b.next) out += renderStmt(b.next, indent);
@@ -2916,6 +3183,10 @@ function generateCode() {
   for (const s of declaredServos) {
     libGlobals.push(`Servo ${s};`);
   }
+  // Sweep state instances (from Servo Sweep library)
+  for (const s of declaredSweepStates) {
+    libGlobals.push(`SweepState ${s}_sweep = {0, 0, 0, 0, false};`);
+  }
   if (libGlobals.length) {
     out += '\n';
     for (const g of libGlobals) out += g.endsWith('\n') ? g : g + '\n';
@@ -2925,8 +3196,12 @@ function generateCode() {
     out += '\n';
     for (const v of declaredVars) out += `int ${v} = 0;\n`;
   }
-  if (declaredPinArrays.size) {
+  if (declaredUnsignedLongs.size) {
     if (!declaredVars.size) out += '\n';
+    for (const v of declaredUnsignedLongs) out += `unsigned long ${v} = 0;\n`;
+  }
+  if (declaredPinArrays.size) {
+    if (!declaredVars.size && !declaredUnsignedLongs.size) out += '\n';
     for (const [v, sz] of declaredPinArrays) out += `int ${v}[${sz}];\n`;
   }
   if (forwardDecls.length) {
@@ -3120,12 +3395,30 @@ function openLibraryModal() {
       </div>
     `;
     const cb = row.querySelector('input');
-    function toggle() {
+    async function toggle() {
+      // If turning OFF a library that has blocks in the workspace, warn.
+      if (!cb.checked && state.activeLibraries.has(libId)) {
+        const blocksInUse = countBlocksUsingLib(libId);
+        if (blocksInUse > 0) {
+          const ok = await themedConfirm(
+            `${blocksInUse} block${blocksInUse === 1 ? '' : 's'} in your workspace use${blocksInUse === 1 ? 's' : ''} the "${lib.name}" library.\n\n` +
+            `Disabling it will mark those blocks as broken (dashed red outline). Your program won't compile until you delete them or re-enable the library.\n\n` +
+            `Disable anyway?`,
+            { okLabel: 'Disable anyway', cancelLabel: 'Keep enabled' }
+          );
+          if (!ok) {
+            cb.checked = true;
+            return;
+          }
+        }
+      }
+      pushHistorySnapshot();
       if (cb.checked) state.activeLibraries.add(libId);
       else state.activeLibraries.delete(libId);
       row.classList.toggle('active', cb.checked);
       applyActiveLibraries();
       renderPalette();
+      renderWorkspace();
       regenerate();
       saveState();
     }
@@ -3179,10 +3472,28 @@ function openSettingsModal() {
       </label>
     `;
     const cb = row.querySelector('input');
-    cb.addEventListener('change', () => {
+    cb.addEventListener('change', async () => {
+      // If turning OFF a setting whose blocks are in use, warn.
+      if (!cb.checked && state.settings[s.key]) {
+        const blocksInUse = countBlocksUsingSetting(s.key);
+        if (blocksInUse > 0) {
+          const ok = await themedConfirm(
+            `${blocksInUse} block${blocksInUse === 1 ? '' : 's'} in your workspace depend${blocksInUse === 1 ? 's' : ''} on "${s.label}".\n\n` +
+            `Disabling it will mark those blocks as broken (dashed red outline). Your program won't compile until you delete them or re-enable this setting.\n\n` +
+            `Disable anyway?`,
+            { okLabel: 'Disable anyway', cancelLabel: 'Keep enabled' }
+          );
+          if (!ok) {
+            cb.checked = true;
+            return;
+          }
+        }
+      }
+      pushHistorySnapshot();
       state.settings[s.key] = cb.checked;
       applyActiveLibraries();
       renderPalette();
+      renderWorkspace();
       regenerate();
       saveState();
     });
@@ -3469,6 +3780,75 @@ function redo() {
 }
 
 // ============================================================
+// Themed confirm() replacement
+// ============================================================
+// Native confirm() can be blocked by browsers/extensions or ignored by users
+// who've clicked "don't show more dialogs". This gives us a reliable, styled
+// alternative that always shows.
+function themedConfirm(message, {title = '⚠️ Warning', okLabel = 'Continue', cancelLabel = 'Cancel', danger = false} = {}) {
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirm-modal');
+    const titleEl = document.getElementById('confirm-title');
+    const msgEl = document.getElementById('confirm-message');
+    const okBtn = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    okBtn.textContent = okLabel;
+    cancelBtn.textContent = cancelLabel;
+    okBtn.className = danger ? 'primary' : 'primary';
+
+    modal.classList.add('show');
+    setTimeout(() => okBtn.focus(), 50);
+
+    function cleanup() {
+      modal.classList.remove('show');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onKey);
+    }
+    function onOk() { cleanup(); resolve(true); }
+    function onCancel() { cleanup(); resolve(false); }
+    function onBackdrop(e) { if (e.target.id === 'confirm-modal') { cleanup(); resolve(false); } }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); cleanup(); resolve(false); }
+      else if (e.key === 'Enter') { e.preventDefault(); cleanup(); resolve(true); }
+    }
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onKey);
+  });
+}
+
+// Count how many blocks in the workspace belong to a specific library.
+function countBlocksUsingLib(libId) {
+  const lib = LIBRARIES[libId];
+  if (!lib) return 0;
+  const defNames = new Set(Object.keys(lib.blocks));
+  let n = 0;
+  for (const b of state.blocks.values()) {
+    if (defNames.has(b.def)) n++;
+  }
+  return n;
+}
+
+// Count how many blocks belong to the multi-pin or advanced feature sets.
+function countBlocksUsingSetting(settingKey) {
+  let n = 0;
+  if (settingKey === 'pinPicker') {
+    const names = new Set(Object.keys(MULTI_PIN_BLOCKS));
+    for (const b of state.blocks.values()) if (names.has(b.def)) n++;
+  } else if (settingKey === 'advancedBlocks') {
+    const names = new Set(Object.keys(ADVANCED_BLOCKS));
+    for (const b of state.blocks.values()) if (names.has(b.def)) n++;
+  }
+  return n;
+}
+
+// ============================================================
 // Clipboard: copy / paste / cut / duplicate
 // ============================================================
 // In-memory only. Not synced to the OS clipboard because block trees
@@ -3603,7 +3983,7 @@ function doCopy() {
   // create duplicate setup/loop which C++ won't compile.
   const filtered = roots.filter(id => {
     const b = state.blocks.get(id);
-    const def = BLOCK_DEFS[b.def];
+    const def = getDef(b);
     return def && def.kind !== 'hat';
   });
   if (filtered.length === 0) {
