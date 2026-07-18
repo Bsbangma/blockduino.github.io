@@ -149,6 +149,57 @@ header button:hover { background: #252e3a; border-color: var(--accent); color: v
   font-style: italic;
 }
 
+/* Keyboard shortcuts help modal */
+.shortcuts-section {
+  margin-bottom: 16px;
+}
+.shortcuts-section h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  margin: 0 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line-strong);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.shortcut-row:hover { background: var(--panel-2); }
+.shortcut-row .action {
+  color: var(--ink);
+  flex: 1;
+}
+.shortcut-row .keys {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.shortcut-key {
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 22px;
+  text-align: center;
+}
+.shortcut-plus {
+  color: var(--ink-dim);
+  font-size: 11px;
+}
+
 /* Right-click context menu */
 .context-menu {
   position: fixed;
@@ -1548,7 +1599,7 @@ body.hardcore-active header h1::after {
 <body>
 
 <header>
-  <h1>BlockDuino <span>v5.4 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v5.5 · Arduino Uno</span></h1>
   <div class="right">
     <div class="menu-wrap">
       <button id="b-menu" class="menu-btn">☰ Menu</button>
@@ -1560,6 +1611,7 @@ body.hardcore-active header h1::after {
         <button class="menu-item" data-action="save">💾 Save</button>
         <button class="menu-item" data-action="load">📂 Load</button>
         <button class="menu-item" data-action="check-update">🔄 Check for updates</button>
+        <button class="menu-item" data-action="shortcuts">⌨️ Keyboard shortcuts</button>
         <div class="menu-divider"></div>
         <button class="menu-item danger" data-action="clear">🗑 Clear All</button>
       </div>
@@ -1709,6 +1761,20 @@ body.hardcore-active header h1::after {
   <div class="hc-corner bottom-left">USER: GRAYSON // BSBANGMA</div>
   <div class="hc-corner bottom-right">GRAND RAPIDS, MI</div>
   <div class="hc-flash" id="hc-flash"></div>
+</div>
+
+<!-- Keyboard shortcuts help modal -->
+<div class="modal-backdrop" id="shortcuts-modal">
+  <div class="modal" style="width:560px;">
+    <h2>⌨️ Keyboard Shortcuts</h2>
+    <p style="color:var(--ink-dim);font-size:12px;margin:0 0 12px 0;line-height:1.5;">
+      Every keyboard shortcut in BlockDuino.
+    </p>
+    <div id="shortcuts-list"></div>
+    <div class="btn-row">
+      <button class="primary" id="shortcuts-close">Done</button>
+    </div>
+  </div>
 </div>
 
 <!-- Right-click context menu for blocks -->
@@ -4488,6 +4554,7 @@ menuDropdown.addEventListener('click', e => {
     case 'save':     saveState(); toast('Saved!'); break;
     case 'load':     loadState(); break;
     case 'check-update': manualUpdateCheck(); break;
+    case 'shortcuts': openShortcutsModal(); break;
     case 'clear':    clearAll(); break;
   }
 });
@@ -4738,6 +4805,85 @@ document.getElementById('b-settings').addEventListener('click', openSettingsModa
 document.getElementById('settings-close').addEventListener('click', closeSettingsModal);
 document.getElementById('settings-modal').addEventListener('click', e => {
   if (e.target.id === 'settings-modal') closeSettingsModal();
+});
+
+// ----------------------------------------------------------
+// Keyboard shortcuts help modal
+// ----------------------------------------------------------
+// Single source of truth for every keyboard shortcut. Grouped by category
+// for the help modal. When adding new shortcuts, add them here too.
+const SHORTCUTS = [
+  { section: 'Editing', items: [
+    { action: 'Copy selected block(s)',       keys: ['Ctrl', 'C'] },
+    { action: 'Paste at cursor',              keys: ['Ctrl', 'V'] },
+    { action: 'Cut selected block(s)',        keys: ['Ctrl', 'X'] },
+    { action: 'Duplicate selected block(s)',  keys: ['Ctrl', 'D'] },
+    { action: 'Delete selected block(s)',     keys: ['Delete'] },
+    { action: 'Delete selected (alternate)',  keys: ['Backspace'] },
+  ]},
+  { section: 'History', items: [
+    { action: 'Undo',                         keys: ['Ctrl', 'Z'] },
+    { action: 'Redo',                         keys: ['Ctrl', 'Shift', 'Z'] },
+    { action: 'Redo (alternate)',             keys: ['Ctrl', 'Y'] },
+  ]},
+  { section: 'Selection', items: [
+    { action: 'Click a block',                keys: ['Left click'] },
+    { action: 'Rubber-band select',           keys: ['Shift', 'Right drag'] },
+    { action: 'Clear selection',              keys: ['Escape'] },
+  ]},
+  { section: 'Workspace', items: [
+    { action: 'Zoom in / out',                keys: ['Scroll wheel'] },
+    { action: 'Pan the workspace',            keys: ['Middle click drag'] },
+    { action: 'Zoom the whole page (browser)',keys: ['Ctrl', 'Scroll'] },
+  ]},
+  { section: 'Menus & Dialogs', items: [
+    { action: 'Show this help',               keys: ['?'] },
+    { action: 'Cancel dialog / close menu',   keys: ['Escape'] },
+    { action: 'Confirm dialog',               keys: ['Enter'] },
+    { action: 'Skip Hardcore Coder cutscene', keys: ['Escape'] },
+  ]},
+];
+
+function openShortcutsModal() {
+  const list = document.getElementById('shortcuts-list');
+  list.innerHTML = '';
+  const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  for (const section of SHORTCUTS) {
+    const sec = document.createElement('div');
+    sec.className = 'shortcuts-section';
+    sec.innerHTML = `<h3>${section.section}</h3>`;
+    for (const item of section.items) {
+      const row = document.createElement('div');
+      row.className = 'shortcut-row';
+      const keysHtml = item.keys.map((k, i) => {
+        // Rewrite Ctrl → ⌘ on Mac for combos
+        const label = (isMac && k === 'Ctrl') ? '⌘' : k;
+        const sep = i > 0 ? '<span class="shortcut-plus">+</span>' : '';
+        return `${sep}<span class="shortcut-key">${label}</span>`;
+      }).join('');
+      row.innerHTML = `<div class="action">${item.action}</div><div class="keys">${keysHtml}</div>`;
+      sec.appendChild(row);
+    }
+    list.appendChild(sec);
+  }
+  document.getElementById('shortcuts-modal').classList.add('show');
+}
+function closeShortcutsModal() {
+  document.getElementById('shortcuts-modal').classList.remove('show');
+}
+document.getElementById('shortcuts-close').addEventListener('click', closeShortcutsModal);
+document.getElementById('shortcuts-modal').addEventListener('click', e => {
+  if (e.target.id === 'shortcuts-modal') closeShortcutsModal();
+});
+// ? key opens shortcuts (matches convention across many apps)
+window.addEventListener('keydown', e => {
+  const t = e.target;
+  const tag = (t && t.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (e.key === '?') {
+    e.preventDefault();
+    openShortcutsModal();
+  }
 });
 
 // ----------------------------------------------------------
