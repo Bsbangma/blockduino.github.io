@@ -241,6 +241,15 @@ text.bold { font-weight: 600; }
   margin-right: 4px;
   animation: pulse 1.5s infinite;
 }
+
+/* Download button */
+.download-btn {
+  background: linear-gradient(135deg, #98c379 0%, #56d2c9 100%) !important;
+  color: #0f1419 !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+.download-btn:hover { filter: brightness(1.1); }
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -554,28 +563,283 @@ text.bold { font-weight: 600; }
 }
 .make-function-btn:hover { filter: brightness(1.1); }
 
-.func-edit-btn {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
+/* Header dropdown menu */
+.menu-wrap { position: relative; }
+.menu-btn, .settings-btn {
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  padding: 6px 14px;
+  font-family: inherit; font-size: 11px;
+  cursor: pointer; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.5px;
 }
+.menu-btn:hover, .settings-btn:hover {
+  background: #252e3a; border-color: var(--accent); color: var(--accent);
+}
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 80;
+  padding: 6px;
+}
+.menu-dropdown.show { display: block; }
+.menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  padding: 8px 12px;
+  font-family: inherit; font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.menu-item:hover { background: var(--panel-2); color: var(--accent); }
+.menu-item.danger:hover { background: rgba(224, 108, 117, 0.15); color: #e06c75; }
+.menu-divider {
+  height: 1px;
+  background: var(--line-strong);
+  margin: 4px 0;
+}
+
+/* Library manager modal styling */
+.library-list {
+  margin: 12px 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 6px 0;
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.library-item:hover { border-color: var(--accent); }
+.library-item.active {
+  border-color: var(--accent);
+  background: rgba(86, 210, 201, 0.08);
+}
+.library-item input[type="checkbox"] {
+  width: 18px; height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+.library-info { flex: 1; }
+.library-name {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 13px;
+}
+.library-desc {
+  color: var(--ink-dim);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.library-swatch {
+  width: 14px; height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Settings panel styling */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.setting-row:last-child { border-bottom: 0; }
+.setting-info { flex: 1; padding-right: 12px; }
+.setting-label {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.setting-desc {
+  color: var(--ink-dim);
+  font-size: 11px;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 42px; height: 22px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--line-strong);
+  border-radius: 22px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 3px; top: 3px;
+  background: var(--ink);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: #0f1419;
+}
+
+/* Update-available notification chip */
+.update-chip {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: linear-gradient(135deg, #56d2c9 0%, #4a90e2 100%);
+  color: #0f1419;
+  padding: 10px 14px;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  z-index: 90;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 340px;
+}
+.update-chip.show { transform: translateY(0); opacity: 1; }
+.update-chip:hover { filter: brightness(1.05); }
+.update-chip .reload-btn {
+  background: rgba(15, 20, 25, 0.2);
+  border: 1px solid rgba(15, 20, 25, 0.3);
+  color: #0f1419;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.update-chip .reload-btn:hover { background: rgba(15, 20, 25, 0.35); }
+.update-chip .dismiss-btn {
+  background: transparent;
+  border: none;
+  color: #0f1419;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  opacity: 0.6;
+}
+.update-chip .dismiss-btn:hover { opacity: 1; }
+.block-shape.selected {
+  filter: drop-shadow(0 0 6px rgba(244, 184, 96, 0.9)) drop-shadow(0 0 2px rgba(244, 184, 96, 1));
+  stroke: var(--accent-2) !important;
+  stroke-width: 2.5 !important;
+}
+
+/* Rubber-band selection box */
+.select-box {
+  fill: rgba(244, 184, 96, 0.08);
+  stroke: var(--accent-2);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+/* Pin picker — Arduino Uno SVG */
+.uno-board {
+  display: block;
+  margin: 0 auto;
+  cursor: default;
+  user-select: none;
+}
+.uno-board .board-body { fill: #1e5f3e; stroke: #0e3a26; stroke-width: 1; }
+.uno-board .board-label { fill: rgba(255,255,255,0.5); font-size: 8px; font-family: 'JetBrains Mono', monospace; pointer-events: none; }
+.uno-board .pin-hole {
+  fill: #2a2a2a;
+  stroke: #444;
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 0.1s;
+}
+.uno-board .pin-hole:hover { fill: #555; }
+.uno-board .pin-hole.selected { fill: var(--accent-2); stroke: #fff; stroke-width: 1.5; }
+.uno-board .pin-hole.pwm { stroke: #c678dd; stroke-width: 1.5; }
+.uno-board .pin-hole.pwm.selected { stroke: #fff; }
+.uno-board .pin-label {
+  font-size: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  fill: #d0d0d0;
+  pointer-events: none;
+  text-anchor: middle;
+  font-weight: 600;
+}
+.uno-board .pin-label.selected { fill: var(--accent-2); }
+.uno-board .header-bar { fill: #181818; stroke: #444; }
+.uno-board .usb { fill: #aaa; stroke: #666; }
+.uno-board .reset-btn { fill: #c00; stroke: #800; }
+.uno-board .chip { fill: #111; stroke: #333; }
+.uno-board .chip-label { fill: #888; font-size: 6px; font-family: monospace; pointer-events: none; }
+
+/* The picker-trigger button next to a pin field */
+.pin-pick-btn {
+  background: var(--panel-2);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-dim);
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  margin-left: 4px;
+}
+.pin-pick-btn:hover { color: var(--accent-2); border-color: var(--accent-2); }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>BlockDuino <span>v0.9 · Arduino Uno</span></h1>
+  <h1>BlockDuino <span>v1.7 · Arduino Uno</span></h1>
   <div class="right">
+    <div class="menu-wrap">
+      <button id="b-menu" class="menu-btn">☰ Menu</button>
+      <div class="menu-dropdown" id="menu-dropdown">
+        <button class="menu-item" data-action="download">⬇ Download .ino</button>
+        <button class="menu-item" data-action="library">📚 Libraries</button>
+        <button class="menu-item" data-action="example">✨ Load Example</button>
+        <div class="menu-divider"></div>
+        <button class="menu-item" data-action="save">💾 Save</button>
+        <button class="menu-item" data-action="load">📂 Load</button>
+        <div class="menu-divider"></div>
+        <button class="menu-item danger" data-action="clear">🗑 Clear All</button>
+      </div>
+    </div>
+    <button id="b-settings" class="settings-btn">⚙ Settings</button>
     <button id="b-serial" class="serial-btn">📡 Serial Monitor</button>
-    <button id="b-clear">Clear</button>
-    <button id="b-save">Save</button>
-    <button id="b-load">Load</button>
-    <button id="b-example">Example</button>
   </div>
 </header>
 
@@ -643,6 +907,114 @@ text.bold { font-weight: 600; }
   </div>
 </div>
 
+<!-- Download .ino modal -->
+<div class="modal-backdrop" id="dl-modal">
+  <div class="modal" style="width:420px;">
+    <h2>Download as Arduino sketch</h2>
+    <p style="color:var(--ink-dim);font-size:12px;margin:0 0 12px 0;line-height:1.5;">
+      Pick a name for your sketch. Arduino expects this to match the folder it lives in (no spaces, letters/numbers/underscores).
+    </p>
+    <label>Sketch name</label>
+    <input type="text" id="dl-name" placeholder="myProject" autocomplete="off" value="blockduinoSketch">
+    <p style="color:var(--ink-dim);font-size:11px;margin:12px 0 0 0;line-height:1.5;">
+      💡 <strong>To upload to your Arduino:</strong> open the downloaded <code>.ino</code> file in the Arduino IDE, pick your board and port under Tools, then click the Upload arrow.
+    </p>
+    <div class="btn-row">
+      <button class="secondary" id="dl-cancel">Cancel</button>
+      <button class="primary" id="dl-go">Download</button>
+    </div>
+  </div>
+</div>
+
+<!-- Welcome / helper download modal -->
+<div class="modal-backdrop" id="welcome-modal">
+  <div class="modal" style="width:480px;">
+    <h2>👋 Welcome to BlockDuino</h2>
+    <p style="color:var(--ink);font-size:13px;margin:0 0 16px 0;line-height:1.6;">
+      To upload code directly to your Arduino from this browser, you'll need to install the <strong>BlockDuino Helper</strong> on your computer. It's a tiny program that compiles your code.
+    </p>
+    <p style="color:var(--ink-dim);font-size:12px;margin:0 0 20px 0;line-height:1.6;">
+      You can still use BlockDuino without it — just download your sketch as a <code>.ino</code> file and upload it through the Arduino IDE.
+    </p>
+    <div style="display:flex;justify-content:center;margin-bottom:16px;">
+      <a id="welcome-download-link" href="#" target="_blank" rel="noopener" style="
+        background: linear-gradient(135deg, #98c379 0%, #56d2c9 100%);
+        color: #0f1419;
+        padding: 10px 24px;
+        font-family: inherit; font-size: 13px; font-weight: 700;
+        border-radius: 4px; text-decoration: none;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        display: inline-block;
+      ">⬇ Download Helper</a>
+    </div>
+    <p style="color:var(--ink-dim);font-size:11px;margin:0 0 16px 0;line-height:1.5;text-align:center;font-style:italic;">
+      If you've already done this, please disregard this warning.
+    </p>
+    <label class="checkbox-row">
+      <input type="checkbox" id="welcome-dont-show">
+      <span style="font-size:12px;">Don't show this again</span>
+    </label>
+    <div class="btn-row">
+      <button class="primary" id="welcome-close">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pin picker modal -->
+<div class="modal-backdrop" id="pinpicker-modal">
+  <div class="modal" style="width:640px;max-width:95vw;">
+    <h2>📍 Pin Picker</h2>
+    <p style="color:var(--ink-dim);font-size:12px;margin:0 0 8px 0;line-height:1.5;" id="pinpicker-hint">
+      Click pins to select. Shift+click to range-select. Selected pins show in the box below.
+    </p>
+    <div id="pinpicker-board-wrap" style="background:#0a0d12;border:1px solid var(--line-strong);border-radius:6px;padding:12px;overflow-x:auto;"></div>
+    <label style="margin-top:12px;">Selected pins</label>
+    <input type="text" id="pinpicker-text" placeholder="e.g. 1, 3-5, 9" autocomplete="off">
+    <p style="color:var(--ink-dim);font-size:10px;margin:6px 0 0 0;font-style:italic;">
+      Type to edit manually. Use commas for separate pins, dashes for ranges.
+    </p>
+    <div class="btn-row">
+      <button class="secondary" id="pinpicker-cancel">Cancel</button>
+      <button class="primary" id="pinpicker-go">Use these pins</button>
+    </div>
+  </div>
+</div>
+
+<!-- Library manager modal -->
+<div class="modal-backdrop" id="lib-modal">
+  <div class="modal" style="width:540px;">
+    <h2>📚 Libraries</h2>
+    <p style="color:var(--ink-dim);font-size:12px;margin:0 0 8px 0;line-height:1.5;">
+      Turn on the libraries you want to use. New block categories will appear in the palette for each enabled library.
+    </p>
+    <div class="library-list" id="lib-list"></div>
+    <div class="btn-row">
+      <button class="primary" id="lib-close">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal" style="width:540px;">
+    <h2>⚙ Settings</h2>
+    <p style="color:var(--ink-dim);font-size:12px;margin:0 0 12px 0;line-height:1.5;">
+      Configure BlockDuino features.
+    </p>
+    <div id="settings-list"></div>
+    <div class="btn-row">
+      <button class="primary" id="settings-close">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update-available notification -->
+<div class="update-chip" id="update-chip">
+  <span>🎉 New version available</span>
+  <button class="reload-btn" id="update-reload">Reload</button>
+  <button class="dismiss-btn" id="update-dismiss" title="Dismiss">✕</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Function creation/edit modal -->
@@ -703,10 +1075,16 @@ text.bold { font-weight: 600; }
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const STORE_KEY = 'blockduino_save_v06';
 
+// ============================================================
+// CONFIG — change this URL to your GitHub release page when ready
+// ============================================================
+const HELPER_DOWNLOAD_URL = 'https://github.com/blockduinoapp/blockduinoapp.github.io/releases/tag/Helperv1.0.0';
+const WELCOME_KEY = 'blockduino_welcome_dismissed';
+
 // ----------------------------------------------------------
 // Categories
 // ----------------------------------------------------------
-const CATEGORIES = [
+const BASE_CATEGORIES = [
   { id: 'flow',   name: 'Setup / Loop', colorHex: '#4a90e2' },
   { id: 'pin',    name: 'Pins / IO',    colorHex: '#56d2c9' },
   { id: 'ctrl',   name: 'Control',      colorHex: '#c678dd' },
@@ -716,6 +1094,21 @@ const CATEGORIES = [
   { id: 'serial', name: 'Serial',       colorHex: '#f4b860' },
   { id: 'func',   name: 'My Functions', colorHex: '#ff6b9d' },
 ];
+let CATEGORIES = [...BASE_CATEGORIES];
+
+function rebuildCategories() {
+  CATEGORIES = [...BASE_CATEGORIES];
+  // Append a category for each active library (in stable order)
+  for (const libId of Object.keys(LIBRARIES)) {
+    if (state.activeLibraries && state.activeLibraries.has(libId)) {
+      const lib = LIBRARIES[libId];
+      CATEGORIES.push({ id: lib.id, name: lib.name, colorHex: lib.color });
+    }
+  }
+  if (state.settings && state.settings.advancedBlocks) {
+    CATEGORIES.push({ id: 'advanced', name: 'Advanced', colorHex: '#90a4ae' });
+  }
+}
 
 // ----------------------------------------------------------
 // Block definitions
@@ -917,8 +1310,416 @@ const BLOCK_DEFS = {
 };
 
 // ----------------------------------------------------------
-// State
+// LIBRARIES
 // ----------------------------------------------------------
+// Each library has:
+//   id, name, desc, color, category (palette category id matches the library id),
+//   includes: [list of #include statements],
+//   globals(state): function returning C++ to emit before setup() (e.g. declarations)
+//   blocks: keyed by block name -> def (same shape as BLOCK_DEFS entries)
+// Libraries are inactive by default; activating one adds its blocks to the palette
+// and causes its includes to be emitted in generated code.
+
+const LIBRARIES = {
+  servo: {
+    id: 'servo', name: 'Servo', desc: 'Control hobby servo motors (0–180°).',
+    color: '#ff8a65',
+    includes: ['<Servo.h>'],
+    globals: () => '',  // we declare per-instance below
+    blocks: {
+      servoAttach: {
+        cat: 'servo', kind: 'statement',
+        parts: [
+          {t:'attach servo'}, {f:{name:'name', type:'text', default:'myServo'}},
+          {t:'to pin'},        {f:{name:'pin', type:'number', default:9}},
+        ],
+        code: (b, gen) => { gen.declareServo(b.fields.name); return `${b.fields.name}.attach(${b.fields.pin});`; },
+      },
+      servoWrite: {
+        cat: 'servo', kind: 'statement',
+        parts: [
+          {t:'set servo'}, {f:{name:'name', type:'text', default:'myServo'}},
+          {t:'to angle'},  {i:{name:'angle', valueType:'number', default:'90'}},
+        ],
+        code: (b, gen) => { gen.declareServo(b.fields.name); return `${b.fields.name}.write(${gen.input(b,'angle')});`; },
+      },
+      servoWriteMicroseconds: {
+        cat: 'servo', kind: 'statement',
+        parts: [
+          {t:'servo'}, {f:{name:'name', type:'text', default:'myServo'}},
+          {t:'write µs'}, {i:{name:'us', valueType:'number', default:'1500'}},
+        ],
+        code: (b, gen) => { gen.declareServo(b.fields.name); return `${b.fields.name}.writeMicroseconds(${gen.input(b,'us')});`; },
+      },
+      servoDetach: {
+        cat: 'servo', kind: 'statement',
+        parts: [{t:'detach servo'}, {f:{name:'name', type:'text', default:'myServo'}}],
+        code: (b, gen) => { gen.declareServo(b.fields.name); return `${b.fields.name}.detach();`; },
+      },
+    },
+  },
+
+  tone: {
+    id: 'tone', name: 'Tone / Buzzer', desc: 'Play musical tones on a buzzer or piezo.',
+    color: '#ba68c8',
+    includes: [],  // tone() is built into Arduino, no include needed
+    globals: () => '',
+    blocks: {
+      tonePlay: {
+        cat: 'tone', kind: 'statement',
+        parts: [
+          {t:'play tone on pin'}, {f:{name:'pin', type:'number', default:8}},
+          {t:'frequency'},        {i:{name:'freq', valueType:'number', default:'440'}},
+          {t:'Hz'},
+        ],
+        code: (b, gen) => `tone(${b.fields.pin}, ${gen.input(b,'freq')});`,
+      },
+      tonePlayDuration: {
+        cat: 'tone', kind: 'statement',
+        parts: [
+          {t:'play tone on pin'}, {f:{name:'pin', type:'number', default:8}},
+          {t:'freq'}, {i:{name:'freq', valueType:'number', default:'440'}},
+          {t:'for'},  {i:{name:'dur', valueType:'number', default:'500'}},
+          {t:'ms'},
+        ],
+        code: (b, gen) => `tone(${b.fields.pin}, ${gen.input(b,'freq')}, ${gen.input(b,'dur')});`,
+      },
+      toneNoTone: {
+        cat: 'tone', kind: 'statement',
+        parts: [{t:'stop tone on pin'}, {f:{name:'pin', type:'number', default:8}}],
+        code: (b) => `noTone(${b.fields.pin});`,
+      },
+    },
+  },
+
+  neopixel: {
+    id: 'neopixel', name: 'NeoPixel (Adafruit)', desc: 'Control addressable RGB LED strips.',
+    color: '#e91e63',
+    includes: ['<Adafruit_NeoPixel.h>'],
+    globals: (state) => {
+      // Use defaults; user can change pin/count via setup block
+      const usingNeo = [...state.blocks.values()].some(b =>
+        b.def && b.def.startsWith('neo') && state.topBlocks.has(blockTopId(b.id))
+      );
+      // Always declare a default strip so things work; user calls setupStrip to reconfigure
+      return `Adafruit_NeoPixel strip(8, 6, NEO_GRB + NEO_KHZ800);\n`;
+    },
+    blocks: {
+      neoBegin: {
+        cat: 'neopixel', kind: 'statement',
+        parts: [{t:'NeoPixel begin'}],
+        code: () => `strip.begin();`,
+      },
+      neoSetPixel: {
+        cat: 'neopixel', kind: 'statement',
+        parts: [
+          {t:'set pixel'}, {i:{name:'idx', valueType:'number', default:'0'}},
+          {t:'to R'},      {i:{name:'r', valueType:'number', default:'255'}},
+          {t:'G'},         {i:{name:'g', valueType:'number', default:'0'}},
+          {t:'B'},         {i:{name:'b', valueType:'number', default:'0'}},
+        ],
+        code: (b, gen) => `strip.setPixelColor(${gen.input(b,'idx')}, ${gen.input(b,'r')}, ${gen.input(b,'g')}, ${gen.input(b,'b')});`,
+      },
+      neoShow: {
+        cat: 'neopixel', kind: 'statement',
+        parts: [{t:'NeoPixel show'}],
+        code: () => `strip.show();`,
+      },
+      neoClear: {
+        cat: 'neopixel', kind: 'statement',
+        parts: [{t:'NeoPixel clear'}],
+        code: () => `strip.clear();`,
+      },
+      neoBrightness: {
+        cat: 'neopixel', kind: 'statement',
+        parts: [{t:'set brightness'}, {i:{name:'b', valueType:'number', default:'128'}}],
+        code: (b, gen) => `strip.setBrightness(${gen.input(b,'b')});`,
+      },
+    },
+  },
+
+  lcd: {
+    id: 'lcd', name: 'LCD (LiquidCrystal)', desc: 'Print text to 16×2 / 20×4 character LCDs.',
+    color: '#4dd0e1',
+    includes: ['<LiquidCrystal.h>'],
+    globals: () => `LiquidCrystal lcd(12, 11, 5, 4, 3, 2);\n`,
+    blocks: {
+      lcdBegin: {
+        cat: 'lcd', kind: 'statement',
+        parts: [
+          {t:'LCD begin cols'}, {f:{name:'cols', type:'number', default:16}},
+          {t:'rows'},           {f:{name:'rows', type:'number', default:2}},
+        ],
+        code: (b) => `lcd.begin(${b.fields.cols}, ${b.fields.rows});`,
+      },
+      lcdClear: {
+        cat: 'lcd', kind: 'statement',
+        parts: [{t:'LCD clear'}],
+        code: () => `lcd.clear();`,
+      },
+      lcdSetCursor: {
+        cat: 'lcd', kind: 'statement',
+        parts: [
+          {t:'LCD cursor col'}, {i:{name:'col', valueType:'number', default:'0'}},
+          {t:'row'},            {i:{name:'row', valueType:'number', default:'0'}},
+        ],
+        code: (b, gen) => `lcd.setCursor(${gen.input(b,'col')}, ${gen.input(b,'row')});`,
+      },
+      lcdPrint: {
+        cat: 'lcd', kind: 'statement',
+        parts: [{t:'LCD print'}, {i:{name:'value', valueType:'any', default:'"Hello"'}}],
+        code: (b, gen) => `lcd.print(${gen.input(b,'value')});`,
+      },
+    },
+  },
+
+  eeprom: {
+    id: 'eeprom', name: 'EEPROM', desc: 'Persistent storage (survives power-off).',
+    color: '#aed581',
+    includes: ['<EEPROM.h>'],
+    globals: () => '',
+    blocks: {
+      eepromWrite: {
+        cat: 'eeprom', kind: 'statement',
+        parts: [
+          {t:'EEPROM write address'}, {i:{name:'addr', valueType:'number', default:'0'}},
+          {t:'value'},                {i:{name:'val',  valueType:'number', default:'0'}},
+        ],
+        code: (b, gen) => `EEPROM.write(${gen.input(b,'addr')}, ${gen.input(b,'val')});`,
+      },
+      eepromRead: {
+        cat: 'eeprom', kind: 'reporter', output: 'number',
+        parts: [{t:'EEPROM read address'}, {i:{name:'addr', valueType:'number', default:'0'}}],
+        code: (b, gen) => `EEPROM.read(${gen.input(b,'addr')})`,
+      },
+      eepromUpdate: {
+        cat: 'eeprom', kind: 'statement',
+        parts: [
+          {t:'EEPROM update address'}, {i:{name:'addr', valueType:'number', default:'0'}},
+          {t:'value'},                 {i:{name:'val',  valueType:'number', default:'0'}},
+        ],
+        code: (b, gen) => `EEPROM.update(${gen.input(b,'addr')}, ${gen.input(b,'val')});`,
+      },
+    },
+  },
+
+  wire: {
+    id: 'wire', name: 'Wire (I²C)', desc: 'Talk to I²C sensors and devices.',
+    color: '#ffb74d',
+    includes: ['<Wire.h>'],
+    globals: () => '',
+    blocks: {
+      wireBegin: {
+        cat: 'wire', kind: 'statement',
+        parts: [{t:'Wire begin'}],
+        code: () => `Wire.begin();`,
+      },
+      wireBeginTransmission: {
+        cat: 'wire', kind: 'statement',
+        parts: [{t:'Wire begin transmission to address'}, {i:{name:'addr', valueType:'number', default:'0x68'}}],
+        code: (b, gen) => `Wire.beginTransmission(${gen.input(b,'addr')});`,
+      },
+      wireWrite: {
+        cat: 'wire', kind: 'statement',
+        parts: [{t:'Wire write'}, {i:{name:'val', valueType:'number', default:'0'}}],
+        code: (b, gen) => `Wire.write(${gen.input(b,'val')});`,
+      },
+      wireEndTransmission: {
+        cat: 'wire', kind: 'statement',
+        parts: [{t:'Wire end transmission'}],
+        code: () => `Wire.endTransmission();`,
+      },
+      wireRequest: {
+        cat: 'wire', kind: 'statement',
+        parts: [
+          {t:'Wire request'}, {i:{name:'count', valueType:'number', default:'1'}},
+          {t:'bytes from'},   {i:{name:'addr',  valueType:'number', default:'0x68'}},
+        ],
+        code: (b, gen) => `Wire.requestFrom((int)${gen.input(b,'addr')}, (int)${gen.input(b,'count')});`,
+      },
+      wireRead: {
+        cat: 'wire', kind: 'reporter', output: 'number',
+        parts: [{t:'Wire read'}],
+        code: () => `Wire.read()`,
+      },
+      wireAvailable: {
+        cat: 'wire', kind: 'reporter', output: 'number',
+        parts: [{t:'Wire available'}],
+        code: () => `Wire.available()`,
+      },
+    },
+  },
+};
+
+// Multi-pin blocks — only registered when settings.pinPicker is true.
+// "Pin list" fields accept formats like "1,2,5,7" or "1-6" or "1,3-5,9".
+const MULTI_PIN_BLOCKS = {
+  pinModeMulti: {
+    cat: 'pin', kind: 'statement',
+    parts: [
+      {t:'set pins'}, {f:{name:'pins', type:'pinlist', default:'1,2,3'}},
+      {t:'as'},       {f:{name:'mode', type:'select', default:'OUTPUT', options:['OUTPUT','INPUT','INPUT_PULLUP']}},
+    ],
+    code: (b) => emitMultiPin(b.fields.pins, p => `pinMode(${p}, ${b.fields.mode});`),
+  },
+  digitalWriteMulti: {
+    cat: 'pin', kind: 'statement',
+    parts: [
+      {t:'digital write pins'}, {f:{name:'pins', type:'pinlist', default:'1,2,3'}},
+      {t:'to'},                 {f:{name:'value', type:'select', default:'HIGH', options:['HIGH','LOW']}},
+    ],
+    code: (b) => emitMultiPin(b.fields.pins, p => `digitalWrite(${p}, ${b.fields.value});`),
+  },
+  digitalReadMulti: {
+    cat: 'pin', kind: 'statement',
+    parts: [
+      {t:'read pins'},  {f:{name:'pins', type:'pinlist', default:'1,2,3'}},
+      {t:'into array'}, {f:{name:'var', type:'text', default:'readings'}},
+    ],
+    code: (b, gen) => {
+      const pins = parsePinList(b.fields.pins);
+      gen.declarePinArray(b.fields.var, pins.length);
+      const varName = b.fields.var;
+      // emit:  readings[0] = digitalRead(1); readings[1] = digitalRead(2); ...
+      return pins.map((p, i) => `${varName}[${i}] = digitalRead(${p});`).join(' ');
+    },
+  },
+  analogWriteMulti: {
+    cat: 'pin', kind: 'statement',
+    parts: [
+      {t:'PWM write pins'}, {f:{name:'pins', type:'pinlist', default:'3,5,6'}},
+      {t:'value'},          {i:{name:'value', valueType:'number', default:'128'}},
+    ],
+    code: (b, gen) => {
+      const valExpr = gen.input(b, 'value');
+      const pins = parsePinList(b.fields.pins);
+      // If value is a simple literal, just unroll. Otherwise stash in a temp.
+      if (/^-?\d+$/.test(valExpr.trim())) {
+        return pins.map(p => `analogWrite(${p}, ${valExpr});`).join(' ');
+      }
+      // Use a tight loop so we don't evaluate the expression repeatedly
+      const arr = `{${pins.join(',')}}`;
+      return `{ const int _pp[] = ${arr}; int _v = ${valExpr}; for (int _i=0; _i<${pins.length}; _i++) analogWrite(_pp[_i], _v); }`;
+    },
+  },
+};
+
+// Parse a pin list like "1,3-5,9" or "2 - 4, 7" into [1,3,4,5,9] / [2,3,4,7].
+// Returns deduplicated and sorted ascending. Invalid pieces are ignored.
+function parsePinList(text) {
+  if (text == null) return [];
+  const set = new Set();
+  const parts = String(text).split(',');
+  for (const raw of parts) {
+    const piece = raw.trim();
+    if (!piece) continue;
+    const range = piece.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
+    if (range) {
+      let a = parseInt(range[1], 10);
+      let b = parseInt(range[2], 10);
+      if (isNaN(a) || isNaN(b)) continue;
+      if (a > b) [a, b] = [b, a];
+      for (let p = a; p <= b; p++) set.add(p);
+    } else {
+      const n = parseInt(piece, 10);
+      if (!isNaN(n)) set.add(n);
+    }
+  }
+  return [...set].sort((x, y) => x - y);
+}
+
+// Choose the shorter C++ rendering for a multi-pin statement:
+// either unrolled lines, or a for-loop over an array literal.
+function emitMultiPin(pinListText, lineFor) {
+  const pins = parsePinList(pinListText);
+  if (pins.length === 0) return '// (no pins specified)';
+  if (pins.length === 1) return lineFor(pins[0]);
+  const unrolled = pins.map(p => lineFor(p)).join(' ');
+  // Build a loop variant. We need the body template — re-derive by calling lineFor with a placeholder.
+  const sample = lineFor('_p');
+  // sample like "digitalWrite(_p, HIGH);". Replace `_p` once to test if pattern fits the loop format.
+  // The loop body is whatever lineFor produces with placeholder `_p`.
+  const loop = `for (int _p : {${pins.join(',')}}) ${sample}`;
+  return unrolled.length <= loop.length ? unrolled : loop;
+}
+
+// "Advanced" category — only registered when settings.advancedBlocks is true
+const ADVANCED_BLOCKS = {
+  customInclude: {
+    cat: 'advanced', kind: 'statement',
+    parts: [{t:'#include'}, {f:{name:'header', type:'text', default:'<MyLib.h>'}}],
+    code: (b, gen) => { gen.addRawInclude(b.fields.header); return `// included ${b.fields.header}`; },
+  },
+  customCall: {
+    cat: 'advanced', kind: 'statement',
+    parts: [
+      {t:'call'},          {f:{name:'fn', type:'text', default:'myFunction'}},
+      {t:'with args'},     {f:{name:'args', type:'text', default:''}},
+    ],
+    code: (b) => `${b.fields.fn}(${b.fields.args});`,
+  },
+  customExpression: {
+    cat: 'advanced', kind: 'statement',
+    parts: [{t:'raw C++'}, {f:{name:'code', type:'text', default:'// my code'}}],
+    code: (b) => b.fields.code,
+  },
+  customReporter: {
+    cat: 'advanced', kind: 'reporter', output: 'number',
+    parts: [{t:'value'}, {f:{name:'expr', type:'text', default:'0'}}],
+    code: (b) => `(${b.fields.expr})`,
+  },
+};
+
+// Helper: find the top-of-stack id for any block (walks up parent chain).
+function blockTopId(id) {
+  let cur = id;
+  while (cur) {
+    const b = state.blocks.get(cur);
+    if (!b || !b.parent) return cur;
+    cur = b.parent;
+  }
+  return id;
+}
+
+// ----------------------------------------------------------
+// Library / Advanced block registration
+// ----------------------------------------------------------
+// Removes all library- and advanced-category blocks from BLOCK_DEFS, then
+// re-adds them based on what's currently active. Called when library
+// activation or settings change.
+function applyActiveLibraries() {
+  // Remove any blocks belonging to library categories or advanced
+  for (const key of Object.keys(BLOCK_DEFS)) {
+    const def = BLOCK_DEFS[key];
+    if (def && def.cat && (LIBRARIES[def.cat] || def.cat === 'advanced')) {
+      delete BLOCK_DEFS[key];
+    }
+  }
+  // Re-add active library blocks
+  for (const libId of state.activeLibraries) {
+    const lib = LIBRARIES[libId];
+    if (!lib) continue;
+    for (const [name, def] of Object.entries(lib.blocks)) {
+      BLOCK_DEFS[name] = def;
+    }
+  }
+  // Re-add advanced if enabled
+  if (state.settings.advancedBlocks) {
+    for (const [name, def] of Object.entries(ADVANCED_BLOCKS)) {
+      BLOCK_DEFS[name] = def;
+    }
+  }
+  // Re-add multi-pin blocks if pin picker is enabled
+  if (state.settings.pinPicker) {
+    for (const [name, def] of Object.entries(MULTI_PIN_BLOCKS)) {
+      BLOCK_DEFS[name] = def;
+    }
+  } else {
+    // Strip them out if they were previously registered
+    for (const name of Object.keys(MULTI_PIN_BLOCKS)) delete BLOCK_DEFS[name];
+  }
+  rebuildCategories();
+}
 const state = {
   blocks: new Map(),
   topBlocks: new Set(),
@@ -927,6 +1728,17 @@ const state = {
   // User-defined functions: id -> { id, name, params:[{name,type}], returns, returnType }
   functions: new Map(),
   nextFuncId: 1,
+  // Activated library IDs (Set of strings like 'servo', 'tone', 'neopixel', ...)
+  activeLibraries: new Set(),
+  // User-toggleable settings
+  settings: {
+    advancedBlocks: false,
+    pinPicker: false,
+  },
+  // Selection: Set of block IDs currently selected (gold outline)
+  selection: new Set(),
+  // Selection box drag state (when user is shift+right-drag dragging)
+  selectBox: null,  // {x0,y0,x1,y1} in workspace coords while dragging
 };
 function uid() { return 'b' + (state.nextId++); }
 function funcId() { return 'fn' + (state.nextFuncId++); }
@@ -1114,6 +1926,12 @@ function measureBlock(b) {
       if (fieldDef.type === 'text') w = 90;
       if (fieldDef.type === 'select') w = 80;
       if (fieldDef.type === 'number') w = 50;
+      if (fieldDef.type === 'pinlist') w = 110;
+      // If pin picker is on and this is a pin-style field, leave room for the 📍 button
+      if (state.settings && state.settings.pinPicker &&
+          (fieldDef.type === 'pinlist' || (fieldDef.type === 'number' && fieldDef.name === 'pin'))) {
+        w += 24;
+      }
       partsLayout.push({ kind:'field', field:fieldDef, x:cx, w });
       cx += w + 6;
     } else if (p.i) {
@@ -1267,6 +2085,17 @@ function renderWorkspace() {
       renderStack(svgEl, tid, b.x, b.y);
     }
   }
+  // Draw the rubber-band selection box (if user is dragging one)
+  if (state.selectBox) {
+    const { x0, y0, x1, y1 } = state.selectBox;
+    const rect = document.createElementNS(SVG_NS, 'rect');
+    rect.setAttribute('class', 'select-box');
+    rect.setAttribute('x', Math.min(x0, x1));
+    rect.setAttribute('y', Math.min(y0, y1));
+    rect.setAttribute('width', Math.abs(x1 - x0));
+    rect.setAttribute('height', Math.abs(y1 - y0));
+    svgEl.appendChild(rect);
+  }
 }
 
 function renderStack(parent, id, x, y) {
@@ -1300,6 +2129,7 @@ function renderBlock(parent, b, x, y, m) {
   shape.setAttribute('stroke', dark);
   shape.setAttribute('stroke-width', '1.5');
   shape.classList.add('block-shape');
+  if (state.selection && state.selection.has(b.id)) shape.classList.add('selected');
   shape.dataset.blockId = b.id;
   g.appendChild(shape);
 
@@ -1393,6 +2223,13 @@ function renderFieldControl(parent, b, fieldDef, x, y, width) {
   fo.setAttribute('width', width);
   fo.setAttribute('height', 24);
   fo.style.overflow = 'visible';
+
+  // Container for input (and optional pin-picker button)
+  const wrap = document.createElement('div');
+  wrap.style.display = 'flex';
+  wrap.style.alignItems = 'center';
+  wrap.style.gap = '2px';
+
   let el;
   if (fieldDef.type === 'select') {
     el = document.createElement('select');
@@ -1403,8 +2240,8 @@ function renderFieldControl(parent, b, fieldDef, x, y, width) {
       if (opt === b.fields[fieldDef.name]) o.selected = true;
       el.appendChild(o);
     }
-    el.style.width = (width-2) + 'px';
     el.addEventListener('change', () => {
+      pushHistorySnapshot('field:' + b.id + ':' + fieldDef.name);
       b.fields[fieldDef.name] = el.value;
       renderWorkspace();
       regenerate();
@@ -1412,20 +2249,53 @@ function renderFieldControl(parent, b, fieldDef, x, y, width) {
     });
   } else {
     el = document.createElement('input');
-    el.className = 'field-input' + (fieldDef.type === 'text' ? ' wide' : '');
-    el.type = fieldDef.type === 'number' ? 'number' : 'text';
-    el.style.width = (width-6) + 'px';
+    if (fieldDef.type === 'pinlist') {
+      el.className = 'field-input wide';
+      el.type = 'text';
+    } else {
+      el.className = 'field-input' + (fieldDef.type === 'text' ? ' wide' : '');
+      el.type = fieldDef.type === 'number' ? 'number' : 'text';
+    }
     el.value = b.fields[fieldDef.name];
     el.addEventListener('input', () => {
+      pushHistorySnapshot('field:' + b.id + ':' + fieldDef.name);
       b.fields[fieldDef.name] = el.value;
       renderWorkspace();
       regenerate();
     });
     el.addEventListener('blur', () => saveState());
   }
+  el.style.flex = '1';
+  el.style.minWidth = '30px';
   el.addEventListener('mousedown', e => e.stopPropagation());
   el.addEventListener('pointerdown', e => e.stopPropagation());
-  fo.appendChild(el);
+  wrap.appendChild(el);
+
+  // Add pin picker button if applicable
+  const showPicker = state.settings && state.settings.pinPicker &&
+    (fieldDef.type === 'pinlist' || (fieldDef.type === 'number' && fieldDef.name === 'pin'));
+  if (showPicker) {
+    const btn = document.createElement('button');
+    btn.className = 'pin-pick-btn';
+    btn.textContent = '📍';
+    btn.title = fieldDef.type === 'pinlist' ? 'Open pin picker (multi-select)' : 'Open pin picker';
+    btn.addEventListener('mousedown', e => e.stopPropagation());
+    btn.addEventListener('pointerdown', e => e.stopPropagation());
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const multi = (fieldDef.type === 'pinlist');
+      openPinPicker(b.fields[fieldDef.name], multi, (newVal) => {
+        pushHistorySnapshot();
+        b.fields[fieldDef.name] = newVal;
+        renderWorkspace();
+        regenerate();
+        saveState();
+      });
+    });
+    wrap.appendChild(btn);
+  }
+
+  fo.appendChild(wrap);
   parent.appendChild(fo);
 }
 
@@ -1690,6 +2560,7 @@ document.getElementById('fn-modal').addEventListener('click', e => {
 // ----------------------------------------------------------
 function startPaletteDrag(e, defName) {
   e.preventDefault();
+  pushHistorySnapshot();
   const wsRect = svgEl.getBoundingClientRect();
   const tmp = makeBlock(defName, 0, 0);
   const x = e.clientX - wsRect.left - 20;
@@ -1711,9 +2582,46 @@ svgEl.addEventListener('pointerdown', e => {
     if (target.dataset && target.dataset.blockId) { blockId = target.dataset.blockId; break; }
     target = target.parentNode;
   }
+
+  // ---- Shift+Right-click on empty workspace = start selection box ----
+  if (!blockId && e.button === 2 && e.shiftKey) {
+    e.preventDefault();
+    const wsRect = svgEl.getBoundingClientRect();
+    const sx = e.clientX - wsRect.left;
+    const sy = e.clientY - wsRect.top;
+    state.selectBox = { x0: sx, y0: sy, x1: sx, y1: sy };
+    // clear any prior single-block selection immediately
+    state.selection = new Set();
+    renderWorkspace();
+    window.addEventListener('pointermove', onSelectBoxMove);
+    window.addEventListener('pointerup', onSelectBoxUp);
+    return;
+  }
+
+  // ---- Click on empty workspace with no modifier = clear selection ----
+  if (!blockId && e.button === 0) {
+    if (state.selection.size > 0) {
+      state.selection = new Set();
+      renderWorkspace();
+    }
+    return;
+  }
+
   if (!blockId) return;
+
   const b = state.blocks.get(blockId);
   if (!b) return;
+
+  // Left-click on a block: select it (unless already in a multi-selection),
+  // then start dragging the whole (single) block stack.
+  if (e.button === 0) {
+    // If block wasn't already part of a multi-selection, select just it.
+    if (!state.selection.has(blockId) || state.selection.size <= 1) {
+      state.selection = new Set([blockId]);
+    }
+    // Take a history snapshot before we start mutating positions
+    pushHistorySnapshot();
+  }
 
   // Compute its world position before detach
   const worldX = b._renderX || b.x;
@@ -1908,9 +2816,15 @@ function snapTo(b, target) {
 // ----------------------------------------------------------
 function generateCode() {
   const declaredVars = new Set();
+  const declaredServos = new Set();
+  const declaredPinArrays = new Map(); // name -> size
+  const rawIncludes = new Set();
   const gen = {
     indent: '',
     declareInt: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredVars.add(n); },
+    declareServo: (n) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredServos.add(n); },
+    declarePinArray: (n, size) => { if (n && /^[a-zA-Z_]\w*$/.test(n)) declaredPinArrays.set(n, Math.max(size, declaredPinArrays.get(n) || 0)); },
+    addRawInclude: (h) => { if (h) rawIncludes.add(h); },
     input: (b, slot) => {
       const childId = b.inputs[slot];
       if (childId) {
@@ -1971,9 +2885,49 @@ function generateCode() {
   }
 
   let out = '// Generated by BlockDuino\n';
+
+  // Library includes
+  const libIncludes = [];
+  for (const libId of state.activeLibraries) {
+    const lib = LIBRARIES[libId];
+    if (!lib) continue;
+    for (const inc of lib.includes) {
+      libIncludes.push(`#include ${inc}`);
+    }
+  }
+  // Advanced (raw) includes
+  for (const inc of rawIncludes) {
+    libIncludes.push(`#include ${inc}`);
+  }
+  if (libIncludes.length) {
+    out += '\n';
+    for (const inc of libIncludes) out += inc + '\n';
+  }
+
+  // Library global declarations
+  const libGlobals = [];
+  for (const libId of state.activeLibraries) {
+    const lib = LIBRARIES[libId];
+    if (!lib) continue;
+    const g = lib.globals(state);
+    if (g) libGlobals.push(g);
+  }
+  // Servo instance declarations (one per name referenced)
+  for (const s of declaredServos) {
+    libGlobals.push(`Servo ${s};`);
+  }
+  if (libGlobals.length) {
+    out += '\n';
+    for (const g of libGlobals) out += g.endsWith('\n') ? g : g + '\n';
+  }
+
   if (declaredVars.size) {
     out += '\n';
     for (const v of declaredVars) out += `int ${v} = 0;\n`;
+  }
+  if (declaredPinArrays.size) {
+    if (!declaredVars.size) out += '\n';
+    for (const [v, sz] of declaredPinArrays) out += `int ${v}[${sz}];\n`;
   }
   if (forwardDecls.length) {
     out += '\n// Function prototypes\n';
@@ -2020,7 +2974,12 @@ function serialize() {
   }
   const functions = {};
   for (const [fid, fn] of state.functions) functions[fid] = {...fn, params: [...fn.params]};
-  return { blocks, topBlocks: [...state.topBlocks], nextId: state.nextId, functions, nextFuncId: state.nextFuncId };
+  return {
+    blocks, topBlocks: [...state.topBlocks], nextId: state.nextId,
+    functions, nextFuncId: state.nextFuncId,
+    activeLibraries: [...state.activeLibraries],
+    settings: {...state.settings},
+  };
 }
 function deserialize(data) {
   state.blocks = new Map();
@@ -2037,6 +2996,9 @@ function deserialize(data) {
     }
     state.nextFuncId = data.nextFuncId || 1;
   }
+  state.activeLibraries = new Set(data.activeLibraries || []);
+  state.settings = Object.assign({ advancedBlocks: false, pinPicker: false }, data.settings || {});
+  applyActiveLibraries();
   rebuildFunctionDefs();
 }
 function saveState() {
@@ -2054,6 +3016,7 @@ function loadState() {
 }
 function clearAll() {
   if (!confirm('Clear all blocks and functions?')) return;
+  pushHistorySnapshot();
   state.blocks = new Map();
   state.topBlocks = new Set();
   state.functions = new Map();
@@ -2067,6 +3030,7 @@ function clearAll() {
   renderWorkspace(); regenerate(); saveState();
 }
 function loadExample() {
+  pushHistorySnapshot();
   state.blocks = new Map();
   state.topBlocks = new Set();
   state.nextId = 1;
@@ -2103,12 +3067,136 @@ function toast(msg) {
   clearTimeout(toast._t);
   toast._t = setTimeout(()=>t.classList.remove('show'), 1500);
 }
-document.getElementById('b-clear').addEventListener('click', clearAll);
-document.getElementById('b-save').addEventListener('click', ()=>{ saveState(); toast('Saved!'); });
-document.getElementById('b-load').addEventListener('click', loadState);
-document.getElementById('b-example').addEventListener('click', loadExample);
+// ----------------------------------------------------------
+// Header menu, library modal, settings modal
+// ----------------------------------------------------------
+
+// Menu dropdown open/close
+const menuBtn = document.getElementById('b-menu');
+const menuDropdown = document.getElementById('menu-dropdown');
+menuBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  menuDropdown.classList.toggle('show');
+});
+document.addEventListener('click', e => {
+  if (!menuDropdown.contains(e.target) && e.target !== menuBtn) {
+    menuDropdown.classList.remove('show');
+  }
+});
+
+// Menu item dispatch
+menuDropdown.addEventListener('click', e => {
+  const item = e.target.closest('.menu-item');
+  if (!item) return;
+  const action = item.dataset.action;
+  menuDropdown.classList.remove('show');
+  switch (action) {
+    case 'download': openDownloadModal(); break;
+    case 'library':  openLibraryModal(); break;
+    case 'example':  loadExample(); break;
+    case 'save':     saveState(); toast('Saved!'); break;
+    case 'load':     loadState(); break;
+    case 'clear':    clearAll(); break;
+  }
+});
+
 document.getElementById('b-copy').addEventListener('click', ()=> {
   navigator.clipboard.writeText(document.getElementById('code-output').textContent).then(()=>toast('Copied!'));
+});
+
+// ---- Library modal ----
+function openLibraryModal() {
+  const list = document.getElementById('lib-list');
+  list.innerHTML = '';
+  for (const [libId, lib] of Object.entries(LIBRARIES)) {
+    const row = document.createElement('div');
+    row.className = 'library-item' + (state.activeLibraries.has(libId) ? ' active' : '');
+    row.innerHTML = `
+      <input type="checkbox" ${state.activeLibraries.has(libId) ? 'checked' : ''}>
+      <div class="library-swatch" style="background:${lib.color}"></div>
+      <div class="library-info">
+        <div class="library-name">${lib.name}</div>
+        <div class="library-desc">${lib.desc}</div>
+      </div>
+    `;
+    const cb = row.querySelector('input');
+    function toggle() {
+      if (cb.checked) state.activeLibraries.add(libId);
+      else state.activeLibraries.delete(libId);
+      row.classList.toggle('active', cb.checked);
+      applyActiveLibraries();
+      renderPalette();
+      regenerate();
+      saveState();
+    }
+    cb.addEventListener('change', toggle);
+    row.addEventListener('click', e => {
+      if (e.target !== cb) {
+        cb.checked = !cb.checked;
+        toggle();
+      }
+    });
+    list.appendChild(row);
+  }
+  document.getElementById('lib-modal').classList.add('show');
+}
+function closeLibraryModal() {
+  document.getElementById('lib-modal').classList.remove('show');
+}
+document.getElementById('lib-close').addEventListener('click', closeLibraryModal);
+document.getElementById('lib-modal').addEventListener('click', e => {
+  if (e.target.id === 'lib-modal') closeLibraryModal();
+});
+
+// ---- Settings modal ----
+const SETTINGS_DEFS = [
+  {
+    key: 'advancedBlocks',
+    label: 'Advanced blocks',
+    desc: 'Enables the Advanced category: custom #include, raw C++, custom function calls. For power users.',
+  },
+  {
+    key: 'pinPicker',
+    label: 'Visual pin picker',
+    desc: 'Adds a 📍 button next to pin number fields that opens a clickable Arduino board image. Supports selecting multiple pins (e.g. 1,3,5 or 2-7). Also unlocks new multi-pin blocks in the Pins category.',
+  },
+];
+
+function openSettingsModal() {
+  const list = document.getElementById('settings-list');
+  list.innerHTML = '';
+  for (const s of SETTINGS_DEFS) {
+    const row = document.createElement('div');
+    row.className = 'setting-row';
+    row.innerHTML = `
+      <div class="setting-info">
+        <div class="setting-label">${s.label}</div>
+        <div class="setting-desc">${s.desc}</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${state.settings[s.key] ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+      </label>
+    `;
+    const cb = row.querySelector('input');
+    cb.addEventListener('change', () => {
+      state.settings[s.key] = cb.checked;
+      applyActiveLibraries();
+      renderPalette();
+      regenerate();
+      saveState();
+    });
+    list.appendChild(row);
+  }
+  document.getElementById('settings-modal').classList.add('show');
+}
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.remove('show');
+}
+document.getElementById('b-settings').addEventListener('click', openSettingsModal);
+document.getElementById('settings-close').addEventListener('click', closeSettingsModal);
+document.getElementById('settings-modal').addEventListener('click', e => {
+  if (e.target.id === 'settings-modal') closeSettingsModal();
 });
 
 // ----------------------------------------------------------
@@ -2174,11 +3262,839 @@ function setupResizer(el, side) {
 }
 setupResizer(document.getElementById('resizer-left'), 'left');
 setupResizer(document.getElementById('resizer-right'), 'right');
+
+// ============================================================
+// Update checker
+// ============================================================
+// Polls GitHub for the latest commit sha of index.html on the dev repo.
+// If it doesn't match what we saw on first load, shows a notification chip.
+const UPDATE_CFG = {
+  owner: 'blockduinoapp',
+  repo:  'blockduinoapp.github.io',
+  path:  'index.html',
+  branch: 'main',
+  intervalMs: 3 * 60 * 1000, // check every 3 minutes
+};
+const UPDATE_DISMISS_KEY = 'blockduino_update_dismissed_sha';
+
+let initialSha = null; // sha of the file when the page first loaded
+let latestSha = null;  // most recent sha we've seen
+
+async function fetchLatestSha() {
+  try {
+    const url = `https://api.github.com/repos/${UPDATE_CFG.owner}/${UPDATE_CFG.repo}/commits?path=${encodeURIComponent(UPDATE_CFG.path)}&sha=${encodeURIComponent(UPDATE_CFG.branch)}&per_page=1`;
+    const r = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+    if (!r.ok) return null;
+    const commits = await r.json();
+    if (Array.isArray(commits) && commits.length > 0) return commits[0].sha;
+    return null;
+  } catch(e) {
+    return null;
+  }
+}
+
+function showUpdateChip() {
+  const chip = document.getElementById('update-chip');
+  if (!chip) return;
+  chip.classList.add('show');
+}
+
+function hideUpdateChip() {
+  const chip = document.getElementById('update-chip');
+  if (!chip) return;
+  chip.classList.remove('show');
+}
+
+document.getElementById('update-reload').addEventListener('click', () => {
+  // Force reload bypassing cache
+  window.location.reload();
+});
+document.getElementById('update-dismiss').addEventListener('click', () => {
+  hideUpdateChip();
+  try { localStorage.setItem(UPDATE_DISMISS_KEY, latestSha || ''); } catch(e) {}
+});
+
+async function checkForUpdate() {
+  const sha = await fetchLatestSha();
+  if (!sha) return;
+  if (initialSha === null) {
+    initialSha = sha;
+    latestSha = sha;
+    return;
+  }
+  if (sha === initialSha) return;
+  latestSha = sha;
+  // Respect dismissal — if user already dismissed this specific version, don't nag
+  let dismissedSha = null;
+  try { dismissedSha = localStorage.getItem(UPDATE_DISMISS_KEY); } catch(e) {}
+  if (dismissedSha === sha) return;
+  showUpdateChip();
+}
+
+// Kick off the checker after boot (delayed so we don't add to initial page load)
+setTimeout(() => {
+  checkForUpdate();
+  setInterval(checkForUpdate, UPDATE_CFG.intervalMs);
+}, 8000);
+
+// ============================================================
+// Selection box (shift+right-drag)
+// ============================================================
+function onSelectBoxMove(e) {
+  if (!state.selectBox) return;
+  const wsRect = svgEl.getBoundingClientRect();
+  state.selectBox.x1 = e.clientX - wsRect.left;
+  state.selectBox.y1 = e.clientY - wsRect.top;
+  // Live update selection based on box
+  const bx = Math.min(state.selectBox.x0, state.selectBox.x1);
+  const by = Math.min(state.selectBox.y0, state.selectBox.y1);
+  const bw = Math.abs(state.selectBox.x1 - state.selectBox.x0);
+  const bh = Math.abs(state.selectBox.y1 - state.selectBox.y0);
+  state.selection = new Set();
+  for (const [id, block] of state.blocks) {
+    // Only test top-of-stack blocks (contains all their stack anyway)
+    if (block._renderX === undefined) continue;
+    const m = measureBlock(block);
+    // Include everything in the stack (top block + all next + all children)
+    // We test each rendered block by comparing rects with the select box.
+    // Walk the entire tree rooted at this block, and if ANY of them overlaps, select the top.
+    const overlapsAny = checkStackOverlap(id, bx, by, bw, bh);
+    if (overlapsAny) {
+      // Add every block in this stack subtree to the selection
+      addSubtreeToSelection(id);
+    }
+  }
+  renderWorkspace();
+}
+
+function checkStackOverlap(id, bx, by, bw, bh) {
+  const b = state.blocks.get(id);
+  if (!b || b._renderX === undefined) return false;
+  const m = measureBlock(b);
+  const rx = b._renderX, ry = b._renderY;
+  const rw = m.width, rh = m.totalH;
+  if (rx + rw >= bx && rx <= bx + bw && ry + rh >= by && ry <= by + bh) return true;
+  // check next
+  if (b.next && checkStackOverlap(b.next, bx, by, bw, bh)) return true;
+  // check children
+  for (const c of b.children) {
+    if (checkStackOverlap(c, bx, by, bw, bh)) return true;
+  }
+  // check input reporters
+  for (const s of Object.keys(b.inputs)) {
+    const cid = b.inputs[s];
+    if (cid && checkStackOverlap(cid, bx, by, bw, bh)) return true;
+  }
+  return false;
+}
+
+function addSubtreeToSelection(id) {
+  const b = state.blocks.get(id);
+  if (!b) return;
+  state.selection.add(id);
+  if (b.next) addSubtreeToSelection(b.next);
+  for (const c of b.children) addSubtreeToSelection(c);
+  for (const s of Object.keys(b.inputs)) {
+    const cid = b.inputs[s];
+    if (cid) addSubtreeToSelection(cid);
+  }
+}
+
+function onSelectBoxUp() {
+  state.selectBox = null;
+  window.removeEventListener('pointermove', onSelectBoxMove);
+  window.removeEventListener('pointerup', onSelectBoxUp);
+  renderWorkspace();
+}
+
+// ============================================================
+// Undo / Redo history
+// ============================================================
+const history = {
+  past: [],
+  future: [],
+  MAX: 50,
+  lastFieldEditAt: 0,
+  lastFieldEditKey: null,
+};
+
+function pushHistorySnapshot(key = null) {
+  // If this is a rapid field edit and it matches the previous key, don't create a new snapshot.
+  if (key && key === history.lastFieldEditKey && (Date.now() - history.lastFieldEditAt) < 500) {
+    history.lastFieldEditAt = Date.now();
+    return;
+  }
+  history.lastFieldEditKey = key;
+  history.lastFieldEditAt = Date.now();
+  try {
+    const snap = JSON.stringify(serialize());
+    history.past.push(snap);
+    if (history.past.length > history.MAX) history.past.shift();
+    history.future = [];
+  } catch(e) {}
+}
+
+function undo() {
+  if (history.past.length === 0) { toast('Nothing to undo'); return; }
+  try {
+    const current = JSON.stringify(serialize());
+    history.future.push(current);
+    const prev = history.past.pop();
+    deserialize(JSON.parse(prev));
+    state.selection = new Set();
+    renderPalette();
+    renderWorkspace();
+    regenerate();
+    saveState();
+    toast('Undo');
+    history.lastFieldEditKey = null;
+  } catch(e) { toast('Undo failed'); }
+}
+
+function redo() {
+  if (history.future.length === 0) { toast('Nothing to redo'); return; }
+  try {
+    const current = JSON.stringify(serialize());
+    history.past.push(current);
+    const next = history.future.pop();
+    deserialize(JSON.parse(next));
+    state.selection = new Set();
+    renderPalette();
+    renderWorkspace();
+    regenerate();
+    saveState();
+    toast('Redo');
+    history.lastFieldEditKey = null;
+  } catch(e) { toast('Redo failed'); }
+}
+
+// ============================================================
+// Clipboard: copy / paste / cut / duplicate
+// ============================================================
+// In-memory only. Not synced to the OS clipboard because block trees
+// don't make sense outside BlockDuino.
+const clipboard = {
+  data: null,          // array of serialized block subtrees
+  mousePos: null,      // last known mouse workspace position, for smart paste location
+};
+
+// Track mouse in workspace for smart paste positioning
+svgEl.addEventListener('pointermove', e => {
+  const wsRect = svgEl.getBoundingClientRect();
+  clipboard.mousePos = {
+    x: e.clientX - wsRect.left,
+    y: e.clientY - wsRect.top,
+  };
+});
+
+// Build a list of "root subtrees" from the current selection.
+// A subtree root = a selected block whose parent is not also selected.
+// Each subtree returned includes all descendants (next, children, input reporters).
+function collectSelectionRoots() {
+  const roots = [];
+  const seen = new Set();
+  for (const id of state.selection) {
+    const b = state.blocks.get(id);
+    if (!b) continue;
+    if (b.parent && state.selection.has(b.parent)) continue;
+    if (seen.has(id)) continue;
+    roots.push(id);
+    // Mark whole subtree as seen so we don't return overlapping roots
+    markSubtree(id, seen);
+  }
+  return roots;
+}
+function markSubtree(id, set) {
+  const b = state.blocks.get(id);
+  if (!b || set.has(id)) return;
+  set.add(id);
+  if (b.next) markSubtree(b.next, set);
+  for (const c of b.children) markSubtree(c, set);
+  for (const s of Object.keys(b.inputs)) {
+    const cid = b.inputs[s];
+    if (cid) markSubtree(cid, set);
+  }
+}
+
+// Serialize a subtree into a self-contained portable object.
+// Records the root block's absolute position too, so paste can preserve relative
+// offsets between multiple copied subtrees.
+function serializeSubtree(rootId) {
+  const blocks = {};
+  function walk(id) {
+    const b = state.blocks.get(id);
+    if (!b) return;
+    blocks[id] = {
+      def: b.def, x: b.x, y: b.y,
+      fields: {...b.fields}, inputs: {...b.inputs},
+      next: b.next, children: [...b.children],
+      // parent info is dropped — the paste re-inserts as top-level
+    };
+    if (b.next) walk(b.next);
+    for (const c of b.children) walk(c);
+    for (const s of Object.keys(b.inputs)) {
+      const cid = b.inputs[s];
+      if (cid) walk(cid);
+    }
+  }
+  walk(rootId);
+  const rootB = state.blocks.get(rootId);
+  return {
+    rootId,
+    rootX: rootB._renderX != null ? rootB._renderX : rootB.x,
+    rootY: rootB._renderY != null ? rootB._renderY : rootB.y,
+    blocks,
+  };
+}
+
+// Deserialize a subtree at (dx, dy) offset. Returns the new root's ID.
+function pasteSubtree(subtree, dx, dy) {
+  // Remap all old IDs to fresh IDs
+  const idMap = {};
+  for (const oldId of Object.keys(subtree.blocks)) {
+    idMap[oldId] = uid();
+  }
+  for (const [oldId, blockData] of Object.entries(subtree.blocks)) {
+    const newId = idMap[oldId];
+    // Remap next / children / inputs to new IDs
+    const remappedInputs = {};
+    for (const [slot, cid] of Object.entries(blockData.inputs)) {
+      remappedInputs[slot] = cid ? (idMap[cid] || null) : null;
+    }
+    const nb = {
+      id: newId,
+      def: blockData.def,
+      x: blockData.x + dx,
+      y: blockData.y + dy,
+      fields: {...blockData.fields},
+      inputs: remappedInputs,
+      next: blockData.next ? idMap[blockData.next] : null,
+      children: blockData.children.map(cid => idMap[cid]).filter(Boolean),
+      parent: null,
+      parentType: null,
+      parentSlot: null,
+    };
+    state.blocks.set(newId, nb);
+  }
+  // Now walk again to set parent links correctly on non-root blocks
+  const newRootId = idMap[subtree.rootId];
+  function relink(id, parentId, parentType, parentSlot) {
+    const b = state.blocks.get(id);
+    if (!b) return;
+    b.parent = parentId;
+    b.parentType = parentType;
+    b.parentSlot = parentSlot || null;
+    if (b.next) relink(b.next, id, 'next', null);
+    for (const c of b.children) relink(c, id, 'child', null);
+    for (const s of Object.keys(b.inputs)) {
+      const cid = b.inputs[s];
+      if (cid) relink(cid, id, 'input', s);
+    }
+  }
+  relink(newRootId, null, null, null);
+  state.topBlocks.add(newRootId);
+  return newRootId;
+}
+
+function doCopy() {
+  const roots = collectSelectionRoots();
+  if (roots.length === 0) { toast('Nothing selected'); return; }
+  // Filter out hats (setup/loop, function definitions) — copying them would
+  // create duplicate setup/loop which C++ won't compile.
+  const filtered = roots.filter(id => {
+    const b = state.blocks.get(id);
+    const def = BLOCK_DEFS[b.def];
+    return def && def.kind !== 'hat';
+  });
+  if (filtered.length === 0) {
+    toast('Can\'t copy setup/loop/function blocks');
+    return;
+  }
+  clipboard.data = filtered.map(id => serializeSubtree(id));
+  toast(`Copied ${clipboard.data.length} block${clipboard.data.length === 1 ? '' : 's'}`);
+}
+
+function doPaste() {
+  if (!clipboard.data || clipboard.data.length === 0) { toast('Nothing to paste'); return; }
+  pushHistorySnapshot();
+  // Choose paste offset: if mouse is over workspace, paste near mouse.
+  // Otherwise, offset from originals by (20, 20).
+  let baseX = null, baseY = null;
+  if (clipboard.mousePos) {
+    baseX = clipboard.mousePos.x;
+    baseY = clipboard.mousePos.y;
+  }
+  // Find the bounding min of copied roots' original positions to keep their
+  // relative layout intact after paste.
+  const minRootX = Math.min(...clipboard.data.map(s => s.rootX));
+  const minRootY = Math.min(...clipboard.data.map(s => s.rootY));
+
+  const newRootIds = [];
+  for (const subtree of clipboard.data) {
+    let dx, dy;
+    if (baseX != null) {
+      dx = baseX + (subtree.rootX - minRootX) - subtree.rootX;
+      dy = baseY + (subtree.rootY - minRootY) - subtree.rootY;
+    } else {
+      dx = 20; dy = 20;
+    }
+    const newRootId = pasteSubtree(subtree, dx, dy);
+    newRootIds.push(newRootId);
+  }
+  // Select the pasted blocks so the user sees them highlighted
+  state.selection = new Set();
+  for (const rid of newRootIds) addSubtreeToSelection(rid);
+  renderWorkspace();
+  regenerate();
+  saveState();
+  toast(`Pasted ${newRootIds.length} block${newRootIds.length === 1 ? '' : 's'}`);
+}
+
+function doCut() {
+  if (state.selection.size === 0) { toast('Nothing selected'); return; }
+  doCopy();
+  if (!clipboard.data || clipboard.data.length === 0) return; // copy failed
+  deleteSelection();
+}
+
+function doDuplicate() {
+  if (state.selection.size === 0) { toast('Nothing selected'); return; }
+  const savedClipboard = clipboard.data;
+  const savedMouse = clipboard.mousePos;
+  doCopy();
+  // Force paste to use offset mode, not mouse position
+  clipboard.mousePos = null;
+  doPaste();
+  // Restore user's previous clipboard so duplicate doesn't overwrite it
+  clipboard.data = savedClipboard;
+  clipboard.mousePos = savedMouse;
+}
+
+// ============================================================
+// Keyboard: Delete/Backspace to delete, Ctrl+Z to undo, Ctrl+Y/Ctrl+Shift+Z to redo
+// ============================================================
+window.addEventListener('keydown', e => {
+  // Ignore if the user is typing in a text input, textarea, select, or the code output
+  const t = e.target;
+  const tag = (t && t.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  // Ctrl/Cmd + Z = undo
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    undo();
+    return;
+  }
+  // Ctrl/Cmd + Shift + Z or Ctrl+Y = redo
+  if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') ||
+      ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y')) {
+    e.preventDefault();
+    redo();
+    return;
+  }
+  // Ctrl/Cmd + C = copy
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'c') {
+    if (state.selection.size > 0) {
+      e.preventDefault();
+      doCopy();
+    }
+    return;
+  }
+  // Ctrl/Cmd + V = paste
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'v') {
+    e.preventDefault();
+    doPaste();
+    return;
+  }
+  // Ctrl/Cmd + X = cut
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'x') {
+    if (state.selection.size > 0) {
+      e.preventDefault();
+      doCut();
+    }
+    return;
+  }
+  // Ctrl/Cmd + D = duplicate
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'd') {
+    if (state.selection.size > 0) {
+      e.preventDefault();
+      doDuplicate();
+    }
+    return;
+  }
+  // Delete / Backspace deletes selection
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (state.selection && state.selection.size > 0) {
+      e.preventDefault();
+      deleteSelection();
+    }
+  }
+  // Escape clears selection
+  if (e.key === 'Escape') {
+    if (state.selection.size > 0) {
+      state.selection = new Set();
+      renderWorkspace();
+    }
+  }
+});
+
+function deleteSelection() {
+  if (state.selection.size === 0) return;
+  pushHistorySnapshot();
+  const toDelete = [...state.selection];
+  // If any selected block is part of another selected block's stack, it will be handled by cascade.
+  // Removing top-of-stack blocks handles their children.
+  for (const id of toDelete) {
+    if (state.blocks.has(id)) {
+      // If this block is nested inside another block that is ALSO being deleted, skip it
+      // (it will be removed cascading from that ancestor). Otherwise splice it out.
+      const b = state.blocks.get(id);
+      if (b.parent && state.selection.has(b.parent)) continue;
+      // If it's a next-stack middle block, splice it out so the stack heals
+      if (b.parentType === 'next') {
+        spliceOutBlock(id);
+      } else {
+        removeBlock(id);
+      }
+    }
+  }
+  state.selection = new Set();
+  renderWorkspace();
+  regenerate();
+  saveState();
+}
+
+// Splice out a single block from a stack — its "next" reattaches to its parent.
+// This is what the user described for single-select delete: the gap closes.
+function spliceOutBlock(id) {
+  const b = state.blocks.get(id);
+  if (!b) return;
+  const parent = b.parent ? state.blocks.get(b.parent) : null;
+  const next = b.next ? state.blocks.get(b.next) : null;
+  if (parent && next) {
+    // Reattach parent → next
+    parent.next = next.id;
+    next.parent = parent.id;
+    next.parentType = 'next';
+    b.next = null;
+    b.parent = null;
+    b.parentType = null;
+    b.parentSlot = null;
+  } else if (next) {
+    // No parent, but there's a next: promote next to top
+    b.next = null;
+    next.parent = null;
+    next.parentType = null;
+    // Copy position so it doesn't jump
+    next.x = b.x;
+    next.y = b.y;
+    state.topBlocks.add(next.id);
+  }
+  // Now remove just this one block (its next has been detached)
+  removeBlock(id);
+}
+
+// ============================================================
+// Pin Picker — Arduino Uno board image + multi-select
+// ============================================================
+
+// Compact pin-list rendering: [1,3,4,5,9] -> "1, 3-5, 9"
+function formatPinList(pins) {
+  if (!pins || pins.length === 0) return '';
+  const sorted = [...new Set(pins)].sort((a, b) => a - b);
+  const parts = [];
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] + 1) j++;
+    if (j === i) parts.push(String(sorted[i]));
+    else if (j === i + 1) parts.push(`${sorted[i]}, ${sorted[j]}`);
+    else parts.push(`${sorted[i]}-${sorted[j]}`);
+    i = j + 1;
+  }
+  return parts.join(', ');
+}
+
+// Build the Arduino Uno SVG. Returns an SVG element with pin holes
+// keyed by data-pin attribute (digital 0-13, analog labelled A0..A5 → -1..-6).
+// Digital pins use positive numbers; analog pins use negative numbers so a
+// single integer can represent either.
+function buildArduinoBoard() {
+  const W = 560, H = 280;
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('class', 'uno-board');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', '100%');
+  svg.style.maxWidth = '560px';
+
+  // Board body
+  const body = document.createElementNS(SVG_NS, 'rect');
+  body.setAttribute('class', 'board-body');
+  body.setAttribute('x', 10); body.setAttribute('y', 30);
+  body.setAttribute('width', W - 20); body.setAttribute('height', H - 60);
+  body.setAttribute('rx', 8);
+  svg.appendChild(body);
+
+  // Board title
+  const title = document.createElementNS(SVG_NS, 'text');
+  title.setAttribute('x', W / 2); title.setAttribute('y', H / 2);
+  title.setAttribute('text-anchor', 'middle');
+  title.setAttribute('class', 'board-label');
+  title.style.fontSize = '14px';
+  title.style.fontStyle = 'italic';
+  title.textContent = 'ARDUINO UNO';
+  svg.appendChild(title);
+
+  // USB jack (left side)
+  const usb = document.createElementNS(SVG_NS, 'rect');
+  usb.setAttribute('class', 'usb');
+  usb.setAttribute('x', 0); usb.setAttribute('y', 70);
+  usb.setAttribute('width', 36); usb.setAttribute('height', 36);
+  usb.setAttribute('rx', 2);
+  svg.appendChild(usb);
+
+  // Barrel jack (left side, lower)
+  const barrel = document.createElementNS(SVG_NS, 'rect');
+  barrel.setAttribute('class', 'usb');
+  barrel.setAttribute('x', 0); barrel.setAttribute('y', 160);
+  barrel.setAttribute('width', 28); barrel.setAttribute('height', 28);
+  barrel.setAttribute('rx', 4);
+  svg.appendChild(barrel);
+
+  // Chip in the middle
+  const chip = document.createElementNS(SVG_NS, 'rect');
+  chip.setAttribute('class', 'chip');
+  chip.setAttribute('x', W / 2 - 50); chip.setAttribute('y', H / 2 + 18);
+  chip.setAttribute('width', 100); chip.setAttribute('height', 30);
+  chip.setAttribute('rx', 2);
+  svg.appendChild(chip);
+  const chipLabel = document.createElementNS(SVG_NS, 'text');
+  chipLabel.setAttribute('x', W / 2); chipLabel.setAttribute('y', H / 2 + 37);
+  chipLabel.setAttribute('text-anchor', 'middle');
+  chipLabel.setAttribute('class', 'chip-label');
+  chipLabel.textContent = 'ATmega328P';
+  svg.appendChild(chipLabel);
+
+  // Reset button (top, between header rows)
+  const reset = document.createElementNS(SVG_NS, 'rect');
+  reset.setAttribute('class', 'reset-btn');
+  reset.setAttribute('x', 50); reset.setAttribute('y', 50);
+  reset.setAttribute('width', 16); reset.setAttribute('height', 16);
+  reset.setAttribute('rx', 2);
+  svg.appendChild(reset);
+
+  // ---- Pin headers ----
+  // Top row: digital 13 → 0 (left to right when looking at board with USB on left).
+  // We'll draw them as a row of holes inside a black header strip.
+  const topHeader = document.createElementNS(SVG_NS, 'rect');
+  topHeader.setAttribute('class', 'header-bar');
+  topHeader.setAttribute('x', 70); topHeader.setAttribute('y', 40);
+  topHeader.setAttribute('width', W - 90); topHeader.setAttribute('height', 22);
+  svg.appendChild(topHeader);
+
+  const bottomHeader = document.createElementNS(SVG_NS, 'rect');
+  bottomHeader.setAttribute('class', 'header-bar');
+  bottomHeader.setAttribute('x', 70); bottomHeader.setAttribute('y', H - 62);
+  bottomHeader.setAttribute('width', W - 90); bottomHeader.setAttribute('height', 22);
+  svg.appendChild(bottomHeader);
+
+  const pwmSet = new Set([3, 5, 6, 9, 10, 11]); // PWM-capable digital pins
+  const TOP_PINS_LEFT_TO_RIGHT = [13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+  const BOTTOM_PINS_LEFT_TO_RIGHT = [
+    // We label as strings, but the data-pin value is what we use:
+    // -1 .. -6 represent A0..A5
+    { id: -6, label: 'A5' }, { id: -5, label: 'A4' }, { id: -4, label: 'A3' },
+    { id: -3, label: 'A2' }, { id: -2, label: 'A1' }, { id: -1, label: 'A0' },
+    // spacer for power section visually (no pins for now)
+  ];
+
+  const topStartX = 88, topY = 51;
+  const topSpacing = (W - 110) / TOP_PINS_LEFT_TO_RIGHT.length;
+  TOP_PINS_LEFT_TO_RIGHT.forEach((pin, i) => {
+    const cx = topStartX + i * topSpacing;
+    const hole = document.createElementNS(SVG_NS, 'circle');
+    hole.setAttribute('class', 'pin-hole' + (pwmSet.has(pin) ? ' pwm' : ''));
+    hole.setAttribute('cx', cx); hole.setAttribute('cy', topY);
+    hole.setAttribute('r', 5);
+    hole.dataset.pin = String(pin);
+    svg.appendChild(hole);
+    // Label above
+    const lbl = document.createElementNS(SVG_NS, 'text');
+    lbl.setAttribute('class', 'pin-label');
+    lbl.setAttribute('x', cx); lbl.setAttribute('y', topY - 12);
+    lbl.dataset.pinLabel = String(pin);
+    lbl.textContent = pwmSet.has(pin) ? `~${pin}` : String(pin);
+    svg.appendChild(lbl);
+  });
+
+  const bottomStartX = 88, bottomY = H - 51;
+  const bottomSpacing = (W - 110) / 14; // match top row spacing for visual symmetry
+  BOTTOM_PINS_LEFT_TO_RIGHT.forEach((pin, i) => {
+    const cx = bottomStartX + i * bottomSpacing;
+    const hole = document.createElementNS(SVG_NS, 'circle');
+    hole.setAttribute('class', 'pin-hole');
+    hole.setAttribute('cx', cx); hole.setAttribute('cy', bottomY);
+    hole.setAttribute('r', 5);
+    hole.dataset.pin = String(pin.id);
+    svg.appendChild(hole);
+    const lbl = document.createElementNS(SVG_NS, 'text');
+    lbl.setAttribute('class', 'pin-label');
+    lbl.setAttribute('x', cx); lbl.setAttribute('y', bottomY + 16);
+    lbl.dataset.pinLabel = String(pin.id);
+    lbl.textContent = pin.label;
+    svg.appendChild(lbl);
+  });
+
+  // Section divider for power label
+  const powerLabel = document.createElementNS(SVG_NS, 'text');
+  powerLabel.setAttribute('x', W - 100); powerLabel.setAttribute('y', H - 25);
+  powerLabel.setAttribute('class', 'board-label');
+  powerLabel.style.fontSize = '7px';
+  powerLabel.textContent = 'POWER ↗';
+  svg.appendChild(powerLabel);
+
+  const digitalLabel = document.createElementNS(SVG_NS, 'text');
+  digitalLabel.setAttribute('x', W - 30); digitalLabel.setAttribute('y', 78);
+  digitalLabel.setAttribute('class', 'board-label');
+  digitalLabel.style.fontSize = '7px';
+  digitalLabel.textContent = 'DIGITAL';
+  svg.appendChild(digitalLabel);
+
+  const analogLabel = document.createElementNS(SVG_NS, 'text');
+  analogLabel.setAttribute('x', 78); analogLabel.setAttribute('y', H - 25);
+  analogLabel.setAttribute('class', 'board-label');
+  analogLabel.style.fontSize = '7px';
+  analogLabel.textContent = 'ANALOG IN';
+  svg.appendChild(analogLabel);
+
+  return svg;
+}
+
+// Pin picker state
+const pinPicker = {
+  multi: false,
+  selected: new Set(),
+  lastClicked: null,
+  callback: null,
+  svgEl: null,
+};
+
+function openPinPicker(currentValue, multi, callback) {
+  pinPicker.multi = multi;
+  pinPicker.callback = callback;
+  pinPicker.lastClicked = null;
+  pinPicker.selected = new Set(parsePinList(String(currentValue || '')));
+
+  const wrap = document.getElementById('pinpicker-board-wrap');
+  wrap.innerHTML = '';
+  pinPicker.svgEl = buildArduinoBoard();
+  wrap.appendChild(pinPicker.svgEl);
+
+  // Update hint text
+  const hint = document.getElementById('pinpicker-hint');
+  if (multi) {
+    hint.innerHTML = 'Click pins to select. <strong>Shift+click</strong> to range-select. Selected pins show in the box below.';
+  } else {
+    hint.innerHTML = 'Click a pin to select it. (Only one pin allowed for this block.)';
+  }
+
+  // Wire up clicks
+  pinPicker.svgEl.querySelectorAll('.pin-hole').forEach(h => {
+    h.addEventListener('click', e => {
+      const pin = parseInt(h.dataset.pin, 10);
+      if (!multi) {
+        pinPicker.selected = new Set([pin]);
+        pinPicker.lastClicked = pin;
+      } else if (e.shiftKey && pinPicker.lastClicked != null) {
+        // Range select from lastClicked to pin (positive pins only — ranges across analog don't make sense)
+        const a = Math.min(pinPicker.lastClicked, pin);
+        const b = Math.max(pinPicker.lastClicked, pin);
+        // Only do range select among digital pins (positive) for simplicity
+        if (a >= 0 && b >= 0) {
+          for (let p = a; p <= b; p++) pinPicker.selected.add(p);
+        } else {
+          pinPicker.selected.add(pin);
+        }
+      } else {
+        if (pinPicker.selected.has(pin)) {
+          pinPicker.selected.delete(pin);
+        } else {
+          pinPicker.selected.add(pin);
+        }
+        pinPicker.lastClicked = pin;
+      }
+      refreshPinPickerVisuals();
+    });
+  });
+
+  // Wire up text-input → visual sync
+  const textInput = document.getElementById('pinpicker-text');
+  textInput.value = formatPinList([...pinPicker.selected].filter(n => n >= 0));
+  // For now, the picker stores positive pins (digital) directly and labels analog as A0..A5
+  textInput.oninput = () => {
+    // Parse text — only digital (positive) for now; analog text would need 'A0' parsing
+    // We accept "A0" style for analog by treating it as -1 etc., but field stores text as-is.
+    pinPicker.selected = new Set(parsePinList(textInput.value));
+    refreshPinPickerVisuals(true);
+  };
+
+  refreshPinPickerVisuals();
+  document.getElementById('pinpicker-modal').classList.add('show');
+  setTimeout(() => textInput.focus(), 100);
+}
+
+function refreshPinPickerVisuals(skipTextUpdate) {
+  if (!pinPicker.svgEl) return;
+  pinPicker.svgEl.querySelectorAll('.pin-hole').forEach(h => {
+    const pin = parseInt(h.dataset.pin, 10);
+    h.classList.toggle('selected', pinPicker.selected.has(pin));
+  });
+  pinPicker.svgEl.querySelectorAll('.pin-label').forEach(l => {
+    const pin = parseInt(l.dataset.pinLabel, 10);
+    l.classList.toggle('selected', pinPicker.selected.has(pin));
+  });
+  if (!skipTextUpdate) {
+    const textInput = document.getElementById('pinpicker-text');
+    textInput.value = formatPinList([...pinPicker.selected]);
+  }
+}
+
+function closePinPicker() {
+  document.getElementById('pinpicker-modal').classList.remove('show');
+  pinPicker.callback = null;
+  pinPicker.svgEl = null;
+}
+
+function confirmPinPicker() {
+  const textInput = document.getElementById('pinpicker-text');
+  const raw = textInput.value.trim();
+  let result;
+  if (pinPicker.multi) {
+    result = raw;  // keep user's formatting if any
+  } else {
+    const pins = parsePinList(raw);
+    if (pins.length === 0) {
+      result = '';
+    } else {
+      result = String(pins[0]);
+    }
+  }
+  if (pinPicker.callback) pinPicker.callback(result);
+  closePinPicker();
+}
+
+document.getElementById('pinpicker-cancel').addEventListener('click', closePinPicker);
+document.getElementById('pinpicker-go').addEventListener('click', confirmPinPicker);
+document.getElementById('pinpicker-modal').addEventListener('click', e => {
+  if (e.target.id === 'pinpicker-modal') closePinPicker();
+});
+
 try {
   if (localStorage.getItem(STORE_KEY)) {
     deserialize(JSON.parse(localStorage.getItem(STORE_KEY)));
   }
 } catch(e) {}
+applyActiveLibraries();
 rebuildFunctionDefs();
 renderPalette();
 if (state.blocks.size === 0) {
@@ -2187,6 +4103,56 @@ if (state.blocks.size === 0) {
 }
 renderWorkspace();
 regenerate();
+
+// ============================================================
+// Download as .ino file
+// ============================================================
+function safeSketchName(s) {
+  // Arduino sketch names must start with letter/underscore, can contain letters/digits/underscores
+  let name = (s || '').trim().replace(/[^a-zA-Z0-9_]/g, '_');
+  if (!name) name = 'sketch';
+  if (/^\d/.test(name)) name = '_' + name;
+  return name;
+}
+
+function openDownloadModal() {
+  const modal = document.getElementById('dl-modal');
+  modal.classList.add('show');
+  const inp = document.getElementById('dl-name');
+  setTimeout(() => { inp.focus(); inp.select(); }, 50);
+}
+function closeDownloadModal() {
+  document.getElementById('dl-modal').classList.remove('show');
+}
+
+function downloadSketch() {
+  const rawName = document.getElementById('dl-name').value;
+  const name = safeSketchName(rawName);
+  const code = generateCode();
+
+  // Build the blob and trigger a download
+  const blob = new Blob([code], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name + '.ino';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  closeDownloadModal();
+  toast('Downloaded ' + name + '.ino');
+}
+
+document.getElementById('dl-cancel').addEventListener('click', closeDownloadModal);
+document.getElementById('dl-go').addEventListener('click', downloadSketch);
+document.getElementById('dl-modal').addEventListener('click', e => {
+  if (e.target.id === 'dl-modal') closeDownloadModal();
+});
+document.getElementById('dl-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') downloadSketch();
+});
 
 // ============================================================
 // Serial Monitor (Web Serial API)
@@ -2397,6 +4363,33 @@ document.getElementById('serial-input').addEventListener('keydown', e => {
 
 if (!serialIsSupported()) {
   document.getElementById('b-serial').title = 'Web Serial not supported in this browser';
+}
+
+// ============================================================
+// Welcome / helper download modal
+// ============================================================
+function showWelcomeModal() {
+  document.getElementById('welcome-download-link').href = HELPER_DOWNLOAD_URL;
+  document.getElementById('welcome-dont-show').checked = false;
+  document.getElementById('welcome-modal').classList.add('show');
+}
+function closeWelcomeModal() {
+  const dontShow = document.getElementById('welcome-dont-show').checked;
+  if (dontShow) {
+    try { localStorage.setItem(WELCOME_KEY, '1'); } catch(e) {}
+  }
+  document.getElementById('welcome-modal').classList.remove('show');
+}
+document.getElementById('welcome-close').addEventListener('click', closeWelcomeModal);
+document.getElementById('welcome-modal').addEventListener('click', e => {
+  if (e.target.id === 'welcome-modal') closeWelcomeModal();
+});
+
+// Show on load unless previously dismissed
+try {
+  if (!localStorage.getItem(WELCOME_KEY)) showWelcomeModal();
+} catch(e) {
+  showWelcomeModal();
 }
 </script>
 </body>
